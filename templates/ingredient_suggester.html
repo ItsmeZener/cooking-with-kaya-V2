@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Ingredient Suggester - Cooking with Kaya{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-20 bg-gradient-to-br from-green-50 via-white to-orange-50 overflow-hidden">
+    <!-- Decorative Elements -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-green-200/30 to-emerald-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-br from-orange-200/30 to-yellow-200/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 relative">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-md mb-6 border border-green-100">
+                <i class="fas fa-leaf text-green-500"></i>
+                <span class="text-sm font-semibold text-gray-700">Reduce Food Waste</span>
+            </div>
+            
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                What's in Your <span class="bg-gradient-to-r from-green-500 to-emerald-500 bg-clip-text text-transparent">Fridge?</span>
+            </h1>
+            
+            <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+                Enter the ingredients you have, and our AI will create a delicious recipe just for you. No more wasted food!
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#input-section" class="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl shadow-green-500/30 hover:shadow-green-500/50 hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-magic"></i>
+                    Start Creating
+                </a>
+                <a href="#quick-ingredients" class="inline-flex items-center gap-2 bg-white text-gray-700 border-2 border-gray-200 px-8 py-4 rounded-full font-bold text-lg hover:border-green-300 hover:shadow-lg transition-all duration-300">
+                    <i class="fas fa-carrot text-green-500"></i>
+                    Quick Add
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Input Section -->
+<section id="input-section" class="py-12 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <i class="fas fa-basket-shopping text-white text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Your Ingredients</h2>
+                    <p class="text-gray-500">Add what you have and we'll create magic</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mb-6">
+                <div class="flex-1 relative">
+                    <input type="text" id="ingredient-input" placeholder="e.g., chicken, rice, tomatoes..." 
+                        class="w-full pl-5 pr-12 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white outline-none transition-all duration-200 text-lg"
+                        onkeypress="if(event.key==='Enter') addIngredient()">
+                    <button onclick="addIngredient()" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:shadow-lg hover:shadow-green-500/30 transition-all duration-200 flex items-center justify-center">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Ingredient Tags -->
+            <div id="ingredient-tags" class="flex flex-wrap gap-3 mb-6 min-h-[60px]">
+                <p id="empty-tags" class="text-gray-400 italic w-full">No ingredients added yet. Start typing above or use quick add below!</p>
+            </div>
+            
+            <button onclick="generateRecipe()" id="generate-btn" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-2xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:shadow-green-500/30 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none flex items-center justify-center gap-2" disabled>
+                <i class="fas fa-wand-magic-sparkles"></i>
+                <span>Generate AI Recipe</span>
+            </button>
+        </div>
+    </div>
+</section>
+        
+        <!-- Loading State -->
+<div id="loading" class="hidden py-16">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <div class="bg-white rounded-3xl shadow-xl p-12 border border-gray-100">
+            <div class="relative w-24 h-24 mx-auto mb-6">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full animate-ping opacity-20"></div>
+                <div class="relative w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                    <i class="fas fa-robot text-4xl text-white animate-pulse"></i>
+                </div>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">AI Chef is Cooking...</h3>
+            <p class="text-gray-600">Creating a delicious recipe based on your ingredients</p>
+            <div class="mt-6 flex justify-center gap-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Generated Recipe Section -->
+<div id="ai-recipe" class="hidden py-12">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+            <!-- Recipe Header -->
+            <div class="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 p-8 text-white relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-green-600/20 to-emerald-600/20"></div>
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+                <div class="relative">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium border border-white/30">
+                            <i class="fas fa-robot mr-1"></i>AI Generated
+                        </span>
+                    </div>
+                    <h2 id="recipe-title" class="text-3xl md:text-4xl font-bold mb-4"></h2>
+                    <div class="flex flex-wrap gap-3">
+                        <span id="recipe-difficulty" class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full font-medium border border-white/30"></span>
+                        <span id="recipe-time" class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full border border-white/30">
+                            <i class="far fa-clock mr-2"></i><span id="recipe-time-value"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-8">
+                <p id="recipe-description" class="text-gray-600 text-lg mb-8 leading-relaxed"></p>
+                
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <!-- Ingredients -->
+                    <div class="bg-gray-50 rounded-2xl p-6">
+                        <h3 class="text-xl font-bold mb-4 flex items-center text-gray-900">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-green-500/20">
+                                <i class="fas fa-shopping-basket text-white"></i>
+                            </div>
+                            Ingredients
+                        </h3>
+                        <ul id="recipe-ingredients" class="space-y-3">
+                        </ul>
+                    </div>
+                    
+                    <!-- Instructions -->
+                    <div class="bg-gray-50 rounded-2xl p-6">
+                        <h3 class="text-xl font-bold mb-4 flex items-center text-gray-900">
+                            <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center mr-3 shadow-lg shadow-orange-500/20">
+                                <i class="fas fa-list-ol text-white"></i>
+                            </div>
+                            Instructions
+                        </h3>
+                        <div id="recipe-instructions" class="space-y-4">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Chef Tips -->
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-200 mb-8">
+                    <h3 class="font-bold mb-3 flex items-center text-gray-900">
+                        <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-lightbulb text-white"></i>
+                        </div>
+                        Chef's Pro Tips
+                    </h3>
+                    <p id="recipe-tips" class="text-gray-700 leading-relaxed pl-13"></p>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="saveRecipe()" class="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-2xl font-bold transition-all duration-300 hover:shadow-xl hover:shadow-green-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                        <i class="fas fa-heart"></i>
+                        <span>Save to My Recipes</span>
+                    </button>
+                    <button onclick="generateRecipe()" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-2">
+                        <i class="fas fa-rotate"></i>
+                        <span>Generate Another</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error State -->
+<div id="error" class="hidden py-16">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <div class="bg-white rounded-3xl shadow-xl p-12 border border-gray-100">
+            <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-circle-exclamation text-5xl text-red-500"></i>
+            </div>
+            <h3 class="text-2xl font-bold mb-2 text-gray-900">Oops! Something went wrong</h3>
+            <p class="text-gray-600 mb-6">Our AI chef couldn't create a recipe this time. Let's try again!</p>
+            <button onclick="generateRecipe()" class="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300">
+                <i class="fas fa-rotate mr-2"></i>Try Again
+            </button>
+        </div>
+    </div>
+</div>
+        
+        <!-- Quick Ingredients Suggestions -->
+<section id="quick-ingredients" class="py-16 bg-gradient-to-b from-white to-green-50/30">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold mb-4">Popular Ingredients</h2>
+            <p class="text-gray-600">Click to quickly add common ingredients to your list</p>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+            <!-- Categories -->
+            <div class="space-y-6">
+                <!-- Proteins -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <i class="fas fa-drumstick-bite text-orange-500"></i>
+                        Proteins
+                    </h4>
+                    <div class="flex flex-wrap gap-2">
+                        {% for ingredient in ['Chicken', 'Ground Beef', 'Fish', 'Eggs', 'Tofu', 'Shrimp', 'Pork', 'Turkey'] %}
+                        <button onclick="quickAdd('{{ ingredient }}')" 
+                            class="px-4 py-2.5 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-full transition-all duration-200 font-medium border border-orange-200 hover:shadow-md flex items-center gap-2">
+                            <i class="fas fa-plus text-xs"></i>
+                            {{ ingredient }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Vegetables -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <i class="fas fa-carrot text-green-500"></i>
+                        Vegetables
+                    </h4>
+                    <div class="flex flex-wrap gap-2">
+                        {% for ingredient in ['Tomatoes', 'Onions', 'Garlic', 'Potatoes', 'Carrots', 'Bell Peppers', 'Spinach', 'Broccoli', 'Mushrooms', 'Zucchini'] %}
+                        <button onclick="quickAdd('{{ ingredient }}')" 
+                            class="px-4 py-2.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-full transition-all duration-200 font-medium border border-green-200 hover:shadow-md flex items-center gap-2">
+                            <i class="fas fa-plus text-xs"></i>
+                            {{ ingredient }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Staples -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <i class="fas fa-wheat-awn text-yellow-500"></i>
+                        Staples & Grains
+                    </h4>
+                    <div class="flex flex-wrap gap-2">
+                        {% for ingredient in ['Rice', 'Pasta', 'Bread', 'Cheese', 'Milk', 'Butter', 'Flour', 'Oil'] %}
+                        <button onclick="quickAdd('{{ ingredient }}')" 
+                            class="px-4 py-2.5 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded-full transition-all duration-200 font-medium border border-yellow-200 hover:shadow-md flex items-center gap-2">
+                            <i class="fas fa-plus text-xs"></i>
+                            {{ ingredient }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+    animation: fade-in 0.5s ease forwards;
+}
+</style>
+
+<script>
+let ingredients = [];
+let currentRecipe = null;
+
+function addIngredient() {
+    const input = document.getElementById('ingredient-input');
+    const value = input.value.trim();
+    
+    if (value && !ingredients.includes(value.toLowerCase())) {
+        ingredients.push(value.toLowerCase());
+        updateTags();
+        input.value = '';
+        document.getElementById('generate-btn').disabled = ingredients.length === 0;
+    }
+}
+
+function quickAdd(ingredient) {
+    if (!ingredients.includes(ingredient.toLowerCase())) {
+        ingredients.push(ingredient.toLowerCase());
+        updateTags();
+        document.getElementById('generate-btn').disabled = false;
+    }
+}
+
+function removeIngredient(index) {
+    ingredients.splice(index, 1);
+    updateTags();
+    document.getElementById('generate-btn').disabled = ingredients.length === 0;
+}
+
+function updateTags() {
+    const container = document.getElementById('ingredient-tags');
+    const emptyMsg = document.getElementById('empty-tags');
+    
+    if (ingredients.length === 0) {
+        container.innerHTML = '<p id="empty-tags" class="text-gray-400 italic w-full">No ingredients added yet. Start typing above or use quick add below!</p>';
+    } else {
+        container.innerHTML = ingredients.map((ing, index) => `
+            <span class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 rounded-full font-medium border border-green-200 shadow-sm animate-fade-in">
+                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                ${ing}
+                <button onclick="removeIngredient(${index})" class="ml-3 w-6 h-6 bg-green-200 hover:bg-green-300 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-green-700 text-xs"></i>
+                </button>
+            </span>
+        `).join('');
+    }
+}
+
+async function generateRecipe() {
+    if (ingredients.length === 0) return;
+    
+    document.getElementById('loading').classList.remove('hidden');
+    document.getElementById('ai-recipe').classList.add('hidden');
+    document.getElementById('error').classList.add('hidden');
+    
+    // Scroll to loading
+    document.getElementById('loading').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    try {
+        const response = await fetch('/api/generate-recipe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ingredients: ingredients })
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('loading').classList.add('hidden');
+        
+        if (data.error) {
+            document.getElementById('error').classList.remove('hidden');
+            return;
+        }
+        
+        currentRecipe = data.recipe;
+        displayRecipe(data.recipe);
+        document.getElementById('ai-recipe').classList.remove('hidden');
+        document.getElementById('ai-recipe').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('error').classList.remove('hidden');
+    }
+}
+
+function displayRecipe(recipe) {
+    document.getElementById('recipe-title').textContent = recipe.title;
+    document.getElementById('recipe-difficulty').textContent = recipe.difficulty;
+    document.getElementById('recipe-time-value').textContent = recipe.cooking_time + ' min';
+    document.getElementById('recipe-description').textContent = recipe.description;
+    
+    // Ingredients
+    const ingredientsList = document.getElementById('recipe-ingredients');
+    ingredientsList.innerHTML = recipe.ingredients.map(ing => `
+        <li class="flex items-center bg-white p-3 rounded-xl border border-gray-100">
+            <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
+                <i class="fas fa-check text-white text-xs"></i>
+            </div>
+            <span class="text-gray-700 font-medium">${ing}</span>
+        </li>
+    `).join('');
+    
+    // Instructions
+    const instructionsDiv = document.getElementById('recipe-instructions');
+    instructionsDiv.innerHTML = recipe.instructions.map((step, index) => `
+        <div class="flex items-start">
+            <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center font-bold text-white mr-4 flex-shrink-0 shadow-lg shadow-orange-500/20">
+                ${index + 1}
+            </div>
+            <p class="text-gray-700 pt-2 leading-relaxed">${step}</p>
+        </div>
+    `).join('');
+    
+    // Tips
+    document.getElementById('recipe-tips').textContent = recipe.tips;
+}
+
+async function saveRecipe() {
+    if (!currentRecipe) return;
+    
+    try {
+        const response = await fetch('/api/save-generated-recipe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipe: currentRecipe })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Show success toast
+            const btn = document.querySelector('button[onclick="saveRecipe()"]');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i><span>Saved!</span>';
+            btn.classList.remove('from-green-500', 'to-emerald-500');
+            btn.classList.add('from-emerald-600', 'to-green-600');
+            
+            setTimeout(() => {
+                window.location.href = '/recipe/' + data.recipe_id;
+            }, 1000);
+        } else {
+            alert('Error saving recipe: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving recipe. Please try again.');
+    }
+}
+</script>
+{% endblock %}

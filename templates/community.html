@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+
+{% block title %}Community - Cooking with Kaya{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30">
+                <i class="fas fa-users text-4xl text-white"></i>
+            </div>
+            <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">Community Feed</h1>
+            <p class="text-xl text-gray-600">Share your culinary creations and connect with fellow food lovers</p>
+        </div>
+    </div>
+</section>
+
+<!-- Community Content -->
+<section class="py-12 bg-gray-50 min-h-screen">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Create Post -->
+        {% if current_user.is_authenticated %}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 mb-6 overflow-hidden">
+            <div class="p-5">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                        {{ current_user.username[0]|upper }}
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900">{{ current_user.username }}</p>
+                        <p class="text-sm text-gray-500">What's cooking?</p>
+                    </div>
+                </div>
+                
+                <form action="{{ url_for('add_post') }}" method="POST" enctype="multipart/form-data">
+                    <textarea name="content" rows="2" placeholder="Share your cooking experience, {{ current_user.username }}..." 
+                        class="w-full px-0 py-2 border-0 focus:ring-0 resize-none text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                        oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                    
+                    <!-- Image Preview Area -->
+                    <div id="imagePreview" class="hidden mb-4 relative">
+                        <img src="" alt="Preview" class="w-full h-48 object-cover rounded-xl">
+                        <button type="button" onclick="clearImage()" class="absolute top-2 right-2 bg-gray-800/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-700 transition">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div class="flex items-center gap-2">
+                            <label class="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-gray-100 cursor-pointer transition">
+                                <i class="fas fa-image text-green-500 text-lg"></i>
+                                <span class="text-gray-600 text-sm font-medium">Photo</span>
+                                <input type="file" name="image_file" accept=".png,.jpg,.jpeg,.gif,.webp" class="hidden" onchange="previewImage(this)">
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-6 py-2.5 rounded-xl font-semibold transition shadow-md hover:shadow-lg">
+                            Post
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-6 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-2xl text-gray-400"></i>
+            </div>
+            <p class="text-gray-600 mb-4">Join our community to share your cooking journey!</p>
+            <a href="{{ url_for('register') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold transition hover:shadow-lg hover:shadow-orange-500/30">
+                <i class="fas fa-user-plus"></i>Create Account
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Posts Feed -->
+        <div id="posts-feed" class="space-y-5">
+            {% for post in posts %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden" data-post-id="{{ post.id }}">
+                <!-- Post Header -->
+                <div class="p-5 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                            {{ post.user.username[0]|upper }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-gray-900">{{ post.user.username }}</p>
+                            <p class="text-xs text-gray-500">{{ post.created_at.strftime('%B %d at %I:%M %p') }}</p>
+                        </div>
+                        {% if current_user.is_authenticated and current_user.id == post.user_id %}
+                        <div class="relative post-menu-container" data-post-id="{{ post.id }}">
+                            <button class="post-menu-btn p-2 hover:bg-gray-100 rounded-lg transition">
+                                <i class="fas fa-ellipsis-h text-gray-500"></i>
+                            </button>
+                            <div class="post-menu-dropdown hidden absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-2 min-w-[140px] z-20">
+                                <button class="post-edit-btn w-full flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 transition text-left" data-post-content="{{ post.content|replace('"', '&quot;') }}">
+                                    <i class="fas fa-edit text-blue-500"></i>Edit
+                                </button>
+                                <button class="post-delete-btn w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition text-left">
+                                    <i class="fas fa-trash-alt"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Post Content -->
+                <div class="px-5 py-2" id="post-content-{{ post.id }}">
+                    <p class="text-gray-800 whitespace-pre-line leading-relaxed">{{ post.content }}</p>
+                </div>
+                
+                <!-- Post Image -->
+                {% if post.image_url %}
+                <div class="mt-2">
+                    <img src="{{ post.image_url }}" alt="Post image" class="w-full max-h-96 object-cover">
+                </div>
+                {% endif %}
+                
+                <!-- Recipe Link -->
+                {% if post.recipe_link %}
+                <div class="px-5 mt-3">
+                    <a href="{{ post.recipe_link }}" target="_blank" class="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition">
+                        <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mr-4 shadow-sm">
+                            <i class="fas fa-utensils text-orange-500 text-lg"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-gray-900 truncate">View Recipe</p>
+                            <p class="text-xs text-gray-500 truncate">{{ post.recipe_link }}</p>
+                        </div>
+                        <i class="fas fa-external-link-alt text-gray-400"></i>
+                    </a>
+                </div>
+                {% endif %}
+                
+                <!-- Post Stats -->
+                <div class="px-5 py-3 flex items-center justify-between border-t border-gray-100">
+                    <div class="flex items-center gap-2">
+                        <div class="flex -space-x-1">
+                            <div class="w-6 h-6 bg-rose-500 rounded-full flex items-center justify-center shadow-sm">
+                                <i class="fas fa-heart text-white text-xs"></i>
+                            </div>
+                        </div>
+                        <span class="text-gray-600 text-sm font-medium likes-count" data-post-id="{{ post.id }}">{{ post.likes }}</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-gray-500 text-sm">
+                        <span class="comments-toggle cursor-pointer hover:text-blue-500 transition" data-post-id="{{ post.id }}">
+                            <span class="comments-count" data-post-id="{{ post.id }}">{{ post.comments.count() }}</span> comments
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="px-5 py-2 flex items-center justify-between border-t border-gray-100">
+                    {% if current_user.is_authenticated %}
+                    <button class="like-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-rose-50 transition group" data-post-id="{{ post.id }}">
+                        <i class="far fa-heart text-gray-500 group-hover:text-rose-500 text-lg transition"></i>
+                        <span class="text-gray-600 font-medium group-hover:text-rose-500">Like</span>
+                    </button>
+                    <button class="comments-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-blue-50 transition group" data-post-id="{{ post.id }}">
+                        <i class="far fa-comment text-gray-500 group-hover:text-blue-500 text-lg transition"></i>
+                        <span class="text-gray-600 font-medium group-hover:text-blue-500">Comment</span>
+                    </button>
+                    {% else %}
+                    <span class="flex-1 text-center py-2 text-gray-400 text-sm">
+                        <a href="{{ url_for('login') }}" class="text-orange-500 hover:text-orange-600 font-medium">Login</a> to interact
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Comments Section -->
+                <div class="comments-section hidden bg-gray-50 px-5 py-4" data-post-id="{{ post.id }}">
+                    <!-- Existing Comments -->
+                    <div class="comments-list space-y-3 mb-4" data-post-id="{{ post.id }}">
+                        {% for comment in post.comments %}
+                        <div class="flex gap-3">
+                            <div class="w-9 h-9 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
+                                {{ comment.user.username[0]|upper }}
+                            </div>
+                            <div class="bg-white rounded-2xl px-4 py-3 shadow-sm flex-1">
+                                <p class="font-bold text-sm text-gray-900">{{ comment.user.username }}</p>
+                                <p class="text-gray-700 text-sm leading-relaxed">{{ comment.content }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ comment.created_at.strftime('%B %d at %I:%M %p') }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Add Comment Input -->
+                    {% if current_user.is_authenticated %}
+                    <div class="flex gap-3 mt-4">
+                        <div class="w-9 h-9 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
+                            {{ current_user.username[0]|upper }}
+                        </div>
+                        <div class="flex-1 flex gap-2">
+                            <input type="text" 
+                                placeholder="Write a comment..." 
+                                class="comment-input flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none text-sm"
+                                data-post-id="{{ post.id }}">
+                            <button class="comment-submit-btn bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition shadow-md" data-post-id="{{ post.id }}">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if not posts %}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                <i class="fas fa-users text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-3">No posts yet</h3>
+            <p class="text-gray-600">Be the first to share your cooking experience!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+// Image preview for new post
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    const img = preview.querySelector('img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            img.src = e.target.result;
+            preview.classList.remove('hidden');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function clearImage() {
+    const preview = document.getElementById('imagePreview');
+    const img = preview.querySelector('img');
+    const input = document.querySelector('input[name="image_file"]');
+    
+    img.src = '';
+    preview.classList.add('hidden');
+    input.value = '';
+}
+
+// Like post functionality
+async function likePost(postId) {
+    try {
+        const response = await fetch(`/api/like_post/${postId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update like count
+            const likesCount = document.querySelector(`.likes-count[data-post-id="${postId}"]`);
+            if (likesCount) {
+                likesCount.textContent = data.likes;
+            }
+            
+            // Animate heart icon
+            const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
+            if (likeBtn) {
+                const icon = likeBtn.querySelector('i');
+                const text = likeBtn.querySelector('span');
+                
+                icon.classList.remove('far', 'text-gray-500');
+                icon.classList.add('fas', 'text-rose-500');
+                text.classList.add('text-rose-500');
+            }
+        }
+    } catch (error) {
+        console.error('Error liking post:', error);
+    }
+}
+
+// Toggle comments section
+function toggleComments(postId) {
+    const commentsSection = document.querySelector(`.comments-section[data-post-id="${postId}"]`);
+    commentsSection.classList.toggle('hidden');
+}
+
+// Add comment functionality
+async function addComment(postId) {
+    const input = document.querySelector(`.comment-input[data-post-id="${postId}"]`);
+    const content = input.value.trim();
+    
+    if (!content) return;
+    
+    try {
+        const response = await fetch(`/api/post/${postId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Clear input
+            input.value = '';
+            
+            // Add new comment to the list
+            const commentsList = document.querySelector(`.comments-list[data-post-id="${postId}"]`);
+            const newComment = document.createElement('div');
+            newComment.className = 'flex gap-3 animate-fade-in';
+            newComment.innerHTML = `
+                <div class="w-9 h-9 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
+                    ${data.author[0].toUpperCase()}
+                </div>
+                <div class="bg-white rounded-2xl px-4 py-3 shadow-sm flex-1">
+                    <p class="font-bold text-sm text-gray-900">${data.author}</p>
+                    <p class="text-gray-700 text-sm leading-relaxed">${data.content}</p>
+                    <p class="text-xs text-gray-400 mt-1">${data.created_at}</p>
+                </div>
+            `;
+            
+            // Insert at the top
+            if (commentsList.firstChild) {
+                commentsList.insertBefore(newComment, commentsList.firstChild);
+            } else {
+                commentsList.appendChild(newComment);
+            }
+            
+            // Update comment count
+            const commentsCount = document.querySelector(`.comments-count[data-post-id="${postId}"]`);
+            if (commentsCount) {
+                const currentCount = parseInt(commentsCount.textContent) || 0;
+                commentsCount.textContent = currentCount + 1;
+            }
+        }
+    } catch (error) {
+        console.error('Error adding comment:', error);
+    }
+}
+
+// Toggle post menu dropdown
+function togglePostMenu(postId) {
+    const container = document.querySelector(`.post-menu-container[data-post-id="${postId}"]`);
+    const dropdown = container.querySelector('.post-menu-dropdown');
+    const allDropdowns = document.querySelectorAll('.post-menu-dropdown');
+    
+    // Close all other dropdowns
+    allDropdowns.forEach(d => {
+        if (d !== dropdown) {
+            d.classList.add('hidden');
+        }
+    });
+    
+    dropdown.classList.toggle('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.post-menu-container')) {
+        document.querySelectorAll('.post-menu-dropdown').forEach(d => {
+            d.classList.add('hidden');
+        });
+    }
+});
+
+// Event delegation for post menu buttons
+document.addEventListener('click', function(e) {
+    const menuBtn = e.target.closest('.post-menu-btn');
+    if (menuBtn) {
+        const container = menuBtn.closest('.post-menu-container');
+        const postId = container.dataset.postId;
+        togglePostMenu(postId);
+    }
+});
+
+// Event delegation for edit buttons
+document.addEventListener('click', function(e) {
+    const editBtn = e.target.closest('.post-edit-btn');
+    if (editBtn) {
+        const container = editBtn.closest('.post-menu-container');
+        const postId = container.dataset.postId;
+        const content = editBtn.dataset.postContent;
+        openEditModal(postId, content);
+    }
+});
+
+// Event delegation for delete buttons
+document.addEventListener('click', function(e) {
+    const deleteBtn = e.target.closest('.post-delete-btn');
+    if (deleteBtn) {
+        const container = deleteBtn.closest('.post-menu-container');
+        const postId = container.dataset.postId;
+        deletePost(postId);
+    }
+});
+
+// Event delegation for like buttons
+document.addEventListener('click', function(e) {
+    const likeBtn = e.target.closest('.like-btn');
+    if (likeBtn) {
+        const postId = likeBtn.dataset.postId;
+        likePost(postId);
+    }
+});
+
+// Event delegation for comments toggle
+document.addEventListener('click', function(e) {
+    const commentsToggle = e.target.closest('.comments-toggle, .comments-btn');
+    if (commentsToggle) {
+        const postId = commentsToggle.dataset.postId;
+        toggleComments(postId);
+    }
+});
+
+// Event delegation for comment submit
+document.addEventListener('click', function(e) {
+    const submitBtn = e.target.closest('.comment-submit-btn');
+    if (submitBtn) {
+        const postId = submitBtn.dataset.postId;
+        addComment(postId);
+    }
+});
+
+// Event delegation for comment input enter key
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && e.target.classList.contains('comment-input')) {
+        const postId = e.target.dataset.postId;
+        addComment(postId);
+    }
+});
+
+// Open edit modal
+function openEditModal(postId, content) {
+    const modal = document.getElementById('edit-modal');
+    const textarea = document.getElementById('edit-post-content');
+    const saveBtn = document.getElementById('edit-save-btn');
+    
+    textarea.value = content;
+    saveBtn.onclick = () => saveEdit(postId);
+    modal.classList.remove('hidden');
+}
+
+// Close edit modal
+function closeEditModal() {
+    const modal = document.getElementById('edit-modal');
+    modal.classList.add('hidden');
+}
+
+// Save edited post
+async function saveEdit(postId) {
+    const content = document.getElementById('edit-post-content').value.trim();
+    
+    if (!content) {
+        alert('Post content cannot be empty');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/post/${postId}/edit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update the post content in the DOM
+            const postContent = document.querySelector(`#post-content-${postId} p`);
+            postContent.textContent = content;
+            
+            // Update the edit button's data attribute
+            const editBtn = document.querySelector(`.post-edit-btn[data-post-id="${postId}"]`);
+            if (editBtn) {
+                editBtn.dataset.postContent = content;
+            }
+            
+            closeEditModal();
+        } else {
+            alert('Failed to edit post. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error editing post:', error);
+        alert('Failed to edit post. Please try again.');
+    }
+}
+
+// Delete post
+async function deletePost(postId) {
+    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/post/${postId}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            // Remove the post from the DOM
+            const postElement = document.querySelector(`div[data-post-id="${postId}"]`);
+            postElement.style.animation = 'fade-out 0.3s ease';
+            setTimeout(() => {
+                postElement.remove();
+            }, 300);
+        } else {
+            alert('Failed to delete post. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error deleting post:', error);
+        alert('Failed to delete post. Please try again.');
+    }
+}
+</script>
+
+<!-- Edit Post Modal -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+        <div class="flex items-center justify-between p-5 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Edit Post</h3>
+            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-5">
+            <textarea id="edit-post-content" rows="6" 
+                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none resize-none text-gray-800"
+                placeholder="What's on your mind?"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 p-5 border-t border-gray-100 bg-gray-50">
+            <button onclick="closeEditModal()" class="px-5 py-2.5 text-gray-600 font-medium hover:text-gray-800 transition">
+                Cancel
+            </button>
+            <button id="edit-save-btn" class="px-6 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-out {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Tracker - Cooking with Kaya{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-16 bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/30">
+                <i class="fas fa-chart-line text-4xl text-white"></i>
+            </div>
+            <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">Your Progress</h1>
+            <p class="text-xl text-gray-600">Track your culinary journey and see how you improve over time</p>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-12 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Stats Cards -->
+        <div class="grid md:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/30">
+                    <i class="fas fa-utensils text-2xl text-white"></i>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-2">{{ total_recipes }}</div>
+                <p class="text-gray-600">Recipes Completed</p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-star text-2xl text-white"></i>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-2">{{ avg_level|round(1) }}</div>
+                <p class="text-gray-600">Average Skill Level</p>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-gray-100 hover:shadow-xl transition-shadow">
+                <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/30">
+                    <i class="fas fa-trophy text-2xl text-white"></i>
+                </div>
+                <div class="text-4xl font-bold text-gray-900 mb-2">{{ progress|length }}</div>
+                <p class="text-gray-600">Skills Tracked</p>
+            </div>
+        </div>
+        
+        <!-- Skill Progress -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-900 mb-8">Your Cooking Skills</h2>
+            
+            <div class="space-y-8">
+                {% for skill in progress %}
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex items-center">
+                            <span class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-bold mr-4 shadow-md">
+                                {{ loop.index }}
+                            </span>
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900">{{ skill.skill_name }}</h3>
+                                <p class="text-sm text-gray-500">Level {{ skill.level }}</p>
+                            </div>
+                        </div>
+                        <span class="text-2xl font-bold text-orange-500">{{ skill.experience }}%</span>
+                    </div>
+                    
+                    <div class="h-4 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000" 
+                             style="width: {{ skill.experience }}%"></div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-2 text-sm text-gray-500">
+                        <span>{{ skill.completed_recipes }} recipes completed</span>
+                        <span>Next level: {{ 100 - skill.experience }} XP needed</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Achievements -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Achievements</h2>
+            
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="p-4 rounded-xl {% if total_recipes >= 1 %}bg-yellow-100 border-2 border-yellow-400{% else %}bg-gray-50 border border-gray-200{% endif %} text-center transition-all">
+                    <div class="w-12 h-12 {% if total_recipes >= 1 %}bg-yellow-400{% else %}bg-gray-300{% endif %} rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                        <i class="fas fa-fire text-white text-xl"></i>
+                    </div>
+                    <p class="font-semibold {% if total_recipes >= 1 %}text-yellow-800{% else %}text-gray-500{% endif %}">First Recipe</p>
+                    <p class="text-xs text-gray-500 mt-1">Cook your first dish</p>
+                </div>
+                
+                <div class="p-4 rounded-xl {% if total_recipes >= 10 %}bg-blue-100 border-2 border-blue-400{% else %}bg-gray-50 border border-gray-200{% endif %} text-center transition-all">
+                    <div class="w-12 h-12 {% if total_recipes >= 10 %}bg-blue-500{% else %}bg-gray-300{% endif %} rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                        <i class="fas fa-award text-white text-xl"></i>
+                    </div>
+                    <p class="font-semibold {% if total_recipes >= 10 %}text-blue-800{% else %}text-gray-500{% endif %}">Home Cook</p>
+                    <p class="text-xs text-gray-500 mt-1">Complete 10 recipes</p>
+                </div>
+                
+                <div class="p-4 rounded-xl {% if total_recipes >= 25 %}bg-purple-100 border-2 border-purple-400{% else %}bg-gray-50 border border-gray-200{% endif %} text-center transition-all">
+                    <div class="w-12 h-12 {% if total_recipes >= 25 %}bg-purple-500{% else %}bg-gray-300{% endif %} rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                        <i class="fas fa-medal text-white text-xl"></i>
+                    </div>
+                    <p class="font-semibold {% if total_recipes >= 25 %}text-purple-800{% else %}text-gray-500{% endif %}">Chef de Partie</p>
+                    <p class="text-xs text-gray-500 mt-1">Complete 25 recipes</p>
+                </div>
+                
+                <div class="p-4 rounded-xl {% if total_recipes >= 50 %}bg-orange-100 border-2 border-orange-400{% else %}bg-gray-50 border border-gray-200{% endif %} text-center transition-all">
+                    <div class="w-12 h-12 {% if total_recipes >= 50 %}bg-orange-500{% else %}bg-gray-300{% endif %} rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                        <i class="fas fa-crown text-white text-xl"></i>
+                    </div>
+                    <p class="font-semibold {% if total_recipes >= 50 %}text-orange-800{% else %}text-gray-500{% endif %}">Master Chef</p>
+                    <p class="text-xs text-gray-500 mt-1">Complete 50 recipes</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tips to Level Up -->
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 border border-indigo-100">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-lightbulb text-yellow-500 mr-3"></i>
+                Tips to Level Up Faster
+            </h3>
+            <ul class="space-y-3">
+                <li class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <span class="text-gray-700">Try new recipes regularly to gain experience points</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <span class="text-gray-700">Watch video tutorials to improve your skills</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <span class="text-gray-700">Share your cooking on the community feed</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <span class="text-gray-700">Use the AI Chef to get personalized cooking tips</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+{% endblock %}

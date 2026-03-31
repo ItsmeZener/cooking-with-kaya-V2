@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Video Tutorials - Cooking with Kaya{% endblock %}
+
+{% block content %}
+<div class="py-12">
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="w-20 h-20 bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-play-circle text-4xl text-white"></i>
+            </div>
+            <h1 class="text-4xl font-bold mb-4">Cooking Video Tutorials</h1>
+            <p class="text-xl text-gray-600">Learn essential cooking techniques with step-by-step video guides</p>
+        </div>
+        
+        <!-- Filter by Level -->
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+            <button onclick="filterTutorials('all')" class="filter-btn px-6 py-3 rounded-full bg-gray-900 text-white font-medium transition" data-filter="all">
+                All Levels
+            </button>
+            <button onclick="filterTutorials('beginner')" class="filter-btn px-6 py-3 rounded-full bg-gray-200 text-gray-700 font-medium transition" data-filter="beginner">
+                Beginner
+            </button>
+            <button onclick="filterTutorials('intermediate')" class="filter-btn px-6 py-3 rounded-full bg-gray-200 text-gray-700 font-medium transition" data-filter="intermediate">
+                Intermediate
+            </button>
+            <button onclick="filterTutorials('advanced')" class="filter-btn px-6 py-3 rounded-full bg-gray-200 text-gray-700 font-medium transition" data-filter="advanced">
+                Advanced
+            </button>
+        </div>
+        
+        <!-- Tutorials Grid -->
+        <div id="tutorials-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for tutorial in tutorials %}
+            <div class="tutorial-card bg-white rounded-2xl overflow-hidden shadow-lg card-hover" data-level="{{ tutorial.level }}">
+                <div class="aspect-video bg-gray-900 relative group cursor-pointer" onclick="playVideo('{{ tutorial.video_url }}')">
+                    <iframe src="{{ tutorial.video_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="px-3 py-1 {% if tutorial.level == 'beginner' %}bg-green-100 text-green-700{% elif tutorial.level == 'intermediate' %}bg-yellow-100 text-yellow-700{% else %}bg-red-100 text-red-700{% endif %} rounded-full text-sm font-medium">
+                            {{ tutorial.level|title }}
+                        </span>
+                        <span class="text-gray-500 text-sm">
+                            <i class="far fa-clock mr-1"></i>{{ tutorial.duration }}
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">{{ tutorial.title }}</h3>
+                    <p class="text-gray-600">{{ tutorial.description }}</p>
+                    
+                    <div class="mt-4 pt-4 border-t flex items-center justify-between">
+                        <div class="flex items-center text-gray-500 text-sm">
+                            <i class="fas fa-eye mr-2"></i>
+                            <span>{{ range(1000, 50000)|random|number_format }} views</span>
+                        </div>
+                        <button onclick="markComplete('{{ loop.index }}')" id="complete-btn-{{ loop.index }}" 
+                            class="text-gray-400 hover:text-green-500 transition">
+                            <i class="fas fa-check-circle text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Progress Section -->
+        <div class="mt-16 bg-white rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold mb-6">Your Learning Progress</h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-seedling text-white text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-2xl font-bold">3</p>
+                            <p class="text-gray-600">Beginner Completed</p>
+                        </div>
+                    </div>
+                    <div class="h-2 bg-green-200 rounded-full">
+                        <div class="h-full bg-green-500 rounded-full" style="width: 60%"></div>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-fire text-white text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-2xl font-bold">1</p>
+                            <p class="text-gray-600">Intermediate Completed</p>
+                        </div>
+                    </div>
+                    <div class="h-2 bg-yellow-200 rounded-full">
+                        <div class="h-full bg-yellow-500 rounded-full" style="width: 33%"></div>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-star text-white text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-2xl font-bold">0</p>
+                            <p class="text-gray-600">Advanced Completed</p>
+                        </div>
+                    </div>
+                    <div class="h-2 bg-red-200 rounded-full">
+                        <div class="h-full bg-red-500 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommended Learning Path -->
+        <div class="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-8 text-white">
+            <h2 class="text-2xl font-bold mb-4">Recommended Learning Path</h2>
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center">
+                    <span class="w-8 h-8 bg-white text-indigo-600 rounded-full flex items-center justify-center font-bold mr-3">1</span>
+                    <span>Knife Skills 101</span>
+                </div>
+                <i class="fas fa-arrow-right text-white/50"></i>
+                <div class="flex items-center">
+                    <span class="w-8 h-8 bg-white text-indigo-600 rounded-full flex items-center justify-center font-bold mr-3">2</span>
+                    <span>Perfect Sautéing</span>
+                </div>
+                <i class="fas fa-arrow-right text-white/50"></i>
+                <div class="flex items-center">
+                    <span class="w-8 h-8 bg-white text-indigo-600 rounded-full flex items-center justify-center font-bold mr-3">3</span>
+                    <span>Baking Basics</span>
+                </div>
+                <i class="fas fa-arrow-right text-white/50"></i>
+                <div class="flex items-center">
+                    <span class="w-8 h-8 bg-white/30 rounded-full flex items-center justify-center font-bold mr-3">4</span>
+                    <span class="text-white/70">More to unlock...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let completedVideos = new Set();
+
+function filterTutorials(level) {
+    // Update button styles
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === level) {
+            btn.classList.remove('bg-gray-200', 'text-gray-700');
+            btn.classList.add('bg-gray-900', 'text-white');
+        } else {
+            btn.classList.remove('bg-gray-900', 'text-white');
+            btn.classList.add('bg-gray-200', 'text-gray-700');
+        }
+    });
+    
+    // Filter cards
+    document.querySelectorAll('.tutorial-card').forEach(card => {
+        if (level === 'all' || card.dataset.level === level) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function playVideo(url) {
+    // Video plays automatically in iframe
+}
+
+function markComplete(index) {
+    const btn = document.getElementById(`complete-btn-${index}`);
+    if (completedVideos.has(index)) {
+        completedVideos.delete(index);
+        btn.classList.remove('text-green-500');
+        btn.classList.add('text-gray-400');
+    } else {
+        completedVideos.add(index);
+        btn.classList.remove('text-gray-400');
+        btn.classList.add('text-green-500');
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}My Favorites - Cooking with Kaya{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-16 bg-gradient-to-br from-orange-50 to-red-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/30">
+                <i class="fas fa-heart text-4xl text-white"></i>
+            </div>
+            <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">My Favorites</h1>
+            <p class="text-xl text-gray-600">Your personally curated collection of loved recipes</p>
+        </div>
+    </div>
+</section>
+
+<!-- Favorites Content -->
+<section class="py-12 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if recipes %}
+        <!-- Favorites Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for recipe in recipes %}
+            <div class="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 relative">
+                <div class="absolute top-4 right-4 z-10">
+                    <span class="w-10 h-10 bg-rose-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                        <i class="fas fa-heart"></i>
+                    </span>
+                </div>
+                
+                <div class="relative h-56 overflow-hidden">
+                    {% if recipe.image_url %}
+                    <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                        <i class="fas fa-utensils text-6xl text-white/50"></i>
+                    </div>
+                    {% endif %}
+                    <div class="absolute top-4 left-4">
+                        <span class="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full text-xs font-semibold shadow-sm">
+                            {{ recipe.difficulty|title }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div class="flex items-center gap-3 mb-3 text-sm text-gray-500">
+                        <span class="flex items-center gap-1"><i class="far fa-clock"></i>{{ recipe.cooking_time }} min</span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-rose-600 transition-colors">{{ recipe.title }}</h3>
+                    <p class="text-gray-600 mb-4 line-clamp-2 text-sm leading-relaxed">{{ recipe.description or 'A delicious recipe waiting for you to try.' }}</p>
+                    
+                    <div class="flex gap-2">
+                        <a href="{{ url_for('recipe_detail', recipe_id=recipe.id) }}" 
+                            class="flex-1 text-center bg-gray-900 text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition">
+                            View Recipe
+                        </a>
+                        <form action="{{ url_for('remove_favorite', recipe_id=recipe.id) }}" method="POST" class="flex-shrink-0">
+                            <button type="submit" class="w-12 h-12 bg-rose-100 text-rose-500 rounded-xl hover:bg-rose-200 transition flex items-center justify-center" title="Remove from favorites">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="mt-12 bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-8 border border-rose-100">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Looking for more recipes?</h3>
+                    <p class="text-gray-600">Discover new dishes to add to your collection</p>
+                </div>
+                <div class="flex gap-4">
+                    <a href="{{ url_for('recipes') }}" class="px-6 py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800 transition">
+                        Browse All Recipes
+                    </a>
+                    <a href="{{ url_for('ingredient_suggester') }}" class="px-6 py-3 bg-white text-gray-900 border-2 border-gray-900 rounded-xl font-semibold hover:bg-gray-50 transition">
+                        Use Ingredient Suggester
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <div class="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8">
+                <i class="fas fa-heart-broken text-6xl text-gray-400"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">No favorites yet</h3>
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">Start exploring recipes and click the heart icon to add them to your favorites collection.</p>
+            <a href="{{ url_for('recipes') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-xl font-bold transition hover:shadow-lg hover:shadow-orange-500/30">
+                <i class="fas fa-search"></i>Browse Recipes
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% block extra_css %}
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}
+{% endblock %}
