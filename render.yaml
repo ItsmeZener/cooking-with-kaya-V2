@@ -3,7 +3,7 @@ services:
     name: cooking-with-kaya
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python init_db.py && python -m gunicorn app:app
+    startCommand: python upgrade_db.py && python init_db.py && python -m gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
