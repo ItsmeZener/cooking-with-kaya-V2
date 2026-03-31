@@ -929,38 +929,38 @@ def create_admin(username, email, password):
         db.session.commit()
         print(f'Admin user {username} created successfully!')
 
-if __name__ == '__main__':
-    with app.app_context():
-        # Create tables if they don't exist (don't drop existing data)
-        db.create_all()
-        
-        # Create default admin account only if it doesn't exist
-        existing_admin = User.query.filter_by(username='admin').first()
-        if not existing_admin:
-            admin_user = User(
-                username='admin',
-                email='admin@cookingwithkaya.com',
-                password_hash=generate_password_hash('admin123'),
-                is_admin=True,
-                skill_level='advanced'
-            )
-            db.session.add(admin_user)
-            db.session.flush()  # Get the user id
+# Initialize database tables on startup (for Render deployment)
+def init_database():
+    try:
+        with app.app_context():
+            db.create_all()
             
-            # Initialize progress tracking for admin
-            skills = ['Knife Skills', 'Sautéing', 'Baking', 'Grilling', 'Plating']
-            for skill in skills:
-                progress = Progress(user_id=admin_user.id, skill_name=skill)
-                db.session.add(progress)
-            
-            db.session.commit()
-            print('Database initialized!')
-            print('Admin account created! Username: admin, Password: admin123')
-        else:
-            print('Database ready! Admin account already exists.')
+            # Create default admin account only if it doesn't exist
+            existing_admin = User.query.filter_by(username='admin').first()
+            if not existing_admin:
+                admin_user = User(
+                    username='admin',
+                    email='admin@cookingwithkaya.com',
+                    password_hash=generate_password_hash('admin123'),
+                    is_admin=True,
+                    skill_level='advanced'
+                )
+                db.session.add(admin_user)
+                db.session.flush()
+                
+                # Initialize progress tracking for admin
+                skills = ['Knife Skills', 'Sautéing', 'Baking', 'Grilling', 'Plating']
+                for skill in skills:
+                    progress = Progress(user_id=admin_user.id, skill_name=skill)
+                    db.session.add(progress)
+                
+                db.session.commit()
+                print('Database initialized! Admin: admin / admin123')
+    except Exception as e:
+        print(f'Database init error (may retry): {e}')
 
-# For local development only
+# Call init on startup
+init_database()
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-# End of file
