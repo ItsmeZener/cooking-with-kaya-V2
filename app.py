@@ -933,6 +933,16 @@ def create_admin(username, email, password):
 def init_database():
     try:
         with app.app_context():
+            # First, run migration to fix password_hash column size if using PostgreSQL
+            try:
+                db.session.execute(text('ALTER TABLE "user" ALTER COLUMN password_hash TYPE VARCHAR(256)'))
+                db.session.commit()
+                print('Migration: password_hash column upgraded to VARCHAR(256)')
+            except Exception as migration_error:
+                db.session.rollback()
+                # Column might already be correct or table doesn't exist yet
+                pass
+            
             db.create_all()
             
             # Create default admin account only if it doesn't exist
