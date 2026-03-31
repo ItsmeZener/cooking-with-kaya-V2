@@ -170,7 +170,7 @@ def register():
         user = User(
             username=username,
             email=email,
-            password_hash=generate_password_hash(password),
+            password_hash=generate_password_hash(password, method="pbkdf2:sha256"),
             skill_level=request.form.get('skill_level', 'beginner')
         )
         db.session.add(user)
@@ -246,7 +246,7 @@ def reset_password(user_id):
             return redirect(url_for('reset_password', user_id=user_id))
         
         # Update password
-        user.password_hash = generate_password_hash(new_password)
+        user.password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
         db.session.commit()
         
         flash('Your password has been reset successfully! Please sign in with your new password.', 'success')
@@ -914,7 +914,7 @@ def create_admin(username, email, password):
         user = User(
             username=username,
             email=email,
-            password_hash=generate_password_hash(password),
+            password_hash=generate_password_hash(password, method="pbkdf2:sha256"),
             is_admin=True,
             skill_level='advanced'
         )
@@ -951,7 +951,7 @@ def init_database():
                 admin_user = User(
                     username='admin',
                     email='admin@cookingwithkaya.com',
-                    password_hash=generate_password_hash('admin123'),
+                    password_hash=generate_password_hash('admin123', method='pbkdf2:sha256'),
                     is_admin=True,
                     skill_level='advanced'
                 )
