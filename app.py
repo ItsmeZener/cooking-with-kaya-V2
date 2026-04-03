@@ -336,7 +336,7 @@ def add_recipe():
             description=request.form['description'],
             ingredients=request.form['ingredients'],
             instructions=request.form['instructions'],
-            cooking_time=int(request.form['cooking_time']),
+            cooking_time=int(request.form['cooking_hours']) * 60 + int(request.form['cooking_minutes']),
             difficulty=request.form['difficulty'],
             tags=request.form.get('tags', ''),
             image_url=image_url,
@@ -392,7 +392,7 @@ def edit_recipe(recipe_id):
         recipe.description = request.form['description']
         recipe.ingredients = request.form['ingredients']
         recipe.instructions = request.form['instructions']
-        recipe.cooking_time = int(request.form['cooking_time'])
+        recipe.cooking_time = int(request.form['cooking_hours']) * 60 + int(request.form['cooking_minutes'])
         recipe.difficulty = request.form['difficulty']
         recipe.tags = request.form.get('tags', '')
         recipe.image_url = image_url
