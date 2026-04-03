@@ -103,6 +103,9 @@
                 <p class="text-slate-400 mt-1">View and manage all recipes</p>
             </div>
             <div class="flex items-center gap-4">
+                <a href="{{ url_for('add_recipe') }}" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-2">
+                    <i class="fas fa-plus"></i>Add Recipe
+                </a>
                 <span class="bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full text-sm font-medium border border-emerald-500/30">
                     <i class="fas fa-book-open mr-2"></i>{{ recipes|length }} Recipes
                 </span>
