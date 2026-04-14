@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cooking with Kaya - Functional Decomposition Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 30px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 50px;
+            font-size: 26px;
+            padding: 20px 40px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border-radius: 10px;
+            display: inline-block;
+            left: 50%;
+            position: relative;
+            transform: translateX(-50%);
+        }
+        
+        .diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .root {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 25px 50px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(44, 62, 80, 0.3);
+        }
+        
+        .level-1 {
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .user-type {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .user-box {
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 18px;
+            text-align: center;
+            min-width: 200px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .admin { background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); }
+        .user { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); }
+        
+        .modules {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .module-box {
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            min-width: 110px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .mod-user-mgmt { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .mod-recipe { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); }
+        .mod-ai { background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%); color: #333; }
+        .mod-meal { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); }
+        .mod-cooking { background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%); }
+        .mod-community { background: linear-gradient(135deg, #2980b9 0%, #3498db 100%); }
+        .mod-admin { background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%); }
+        .mod-fav { background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); }
+        .mod-progress { background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%); }
+        
+        .sub-functions {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 12px;
+            align-items: center;
+        }
+        
+        .sub-box {
+            background: #ecf0f1;
+            border: 2px solid #bdc3c7;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            color: #2c3e50;
+            min-width: 100px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .connector-v {
+            width: 2px;
+            height: 25px;
+            background: #7f8c8d;
+            margin: 0 auto;
+        }
+        
+        .legend {
+            margin-top: 50px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .legend h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .legend-items {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FUNCTIONAL DECOMPOSITION DIAGRAM<br>Cooking with Kaya - Recipe Sharing Platform</h1>
+        
+        <div class="diagram">
+            <div class="root">COOKING WITH KAYA<br>Recipe Sharing Platform</div>
+            
+            <div class="connector-v"></div>
+            
+            <!-- Two User Types -->
+            <div class="level-1">
+                
+                <!-- USER (Home Cooks) -->
+                <div class="user-type">
+                    <div class="user-box user">USER<br>(Home Cooks)</div>
+                    
+                    <div class="modules">
+                        
+                        <div class="module">
+                            <div class="module-box mod-user-mgmt">USER MGMT</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Register</div>
+                                <div class="sub-box">Login/Logout</div>
+                                <div class="sub-box">Edit Profile</div>
+                                <div class="sub-box">Set Preferences</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-recipe">RECIPES</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Browse Recipes</div>
+                                <div class="sub-box">Search & Filter</div>
+                                <div class="sub-box">Add Recipe</div>
+                                <div class="sub-box">Edit Recipe</div>
+                                <div class="sub-box">Upload Photos</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-ai">AI CHEF</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Chat with AI</div>
+                                <div class="sub-box">Cooking Tips</div>
+                                <div class="sub-box">Get Substitutions</div>
+                                <div class="sub-box">Generate Recipes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-meal">MEAL PLAN</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Weekly Plan</div>
+                                <div class="sub-box">View Schedule</div>
+                                <div class="sub-box">Customize Meals</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-cooking">COOKING MODE</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Step-by-Step</div>
+                                <div class="sub-box">Voice Guide</div>
+                                <div class="sub-box">Progress Bar</div>
+                                <div class="sub-box">Photo Upload</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-community">COMMUNITY</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Create Posts</div>
+                                <div class="sub-box">Like Posts</div>
+                                <div class="sub-box">Comment</div>
+                                <div class="sub-box">Share Recipes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-fav">FAVORITES</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Save Recipe</div>
+                                <div class="sub-box">View Saved</div>
+                                <div class="sub-box">Remove Favorite</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-progress">PROGRESS</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Skill Level</div>
+                                <div class="sub-box">Track Recipes</div>
+                                <div class="sub-box">Earn XP</div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <!-- ADMIN -->
+                <div class="user-type">
+                    <div class="user-box admin">ADMIN</div>
+                    
+                    <div class="modules">
+                        
+                        <div class="module">
+                            <div class="module-box mod-admin">ADMIN PANEL</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">View All Users</div>
+                                <div class="sub-box">Manage Users</div>
+                                <div class="sub-box">Suspend/Reactivate</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-recipe">RECIPE MGMT</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">View All Recipes</div>
+                                <div class="sub-box">Approve Recipes</div>
+                                <div class="sub-box">Delete Recipes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-community">CONTENT</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">Monitor Posts</div>
+                                <div class="sub-box">Delete Posts</div>
+                                <div class="sub-box">Moderate Comments</div>
+                            </div>
+                        </div>
+                        
+                        <div class="module">
+                            <div class="module-box mod-admin">ANALYTICS</div>
+                            <div class="sub-functions">
+                                <div class="sub-box">User Statistics</div>
+                                <div class="sub-box">Recipe Stats</div>
+                                <div class="sub-box">View Reports</div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+            
+        </div>
+        
+        <div class="legend">
+            <h3>Module Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);"></div>
+                    <span>User Management</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);"></div>
+                    <span>Recipe Management</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);"></div>
+                    <span>AI Chef Assistant</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%);"></div>
+                    <span>Meal Planning</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #16a085 0%, #1abc9c 100%);"></div>
+                    <span>Cooking Mode</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);"></div>
+                    <span>Community</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);"></div>
+                    <span>Administration</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);"></div>
+                    <span>Favorites</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);"></div>
+                    <span>Progress Tracking</span>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</body>
+</html>

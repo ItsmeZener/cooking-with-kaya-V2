@@ -106,6 +106,19 @@ class Comment(db.Model):
     # Relationships - use explicit foreign_keys to avoid conflicts
     user = db.relationship('User', foreign_keys=[user_id], backref='user_comments')
 
+class PostLike(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Unique constraint to prevent duplicate likes
+    __table_args__ = (db.UniqueConstraint('user_id', 'post_id', name='unique_post_like'),)
+    
+    # Relationships
+    user = db.relationship('User', backref='post_likes')
+    post = db.relationship('Post', backref='likes_rel')
+
 class Favorite(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -130,6 +143,9 @@ class MealPlan(db.Model):
     meal_type = db.Column(db.String(20))
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'))
     week_start = db.Column(db.Date)
+    
+    # Relationship to Recipe
+    recipe = db.relationship('Recipe', backref='meal_plans')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -438,7 +454,14 @@ def suggest_recipes():
 @app.route('/community')
 def community():
     posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('community.html', posts=posts)
+    
+    # Get set of post IDs that current user has liked
+    liked_post_ids = set()
+    if current_user.is_authenticated:
+        user_likes = PostLike.query.filter_by(user_id=current_user.id).all()
+        liked_post_ids = {like.post_id for like in user_likes}
+    
+    return render_template('community.html', posts=posts, liked_post_ids=liked_post_ids)
 
 @app.route('/add_post', methods=['POST'])
 @login_required
@@ -474,9 +497,24 @@ def add_post():
 @login_required
 def like_post(post_id):
     post = Post.query.get_or_404(post_id)
-    post.likes += 1
+    
+    # Check if user already liked this post
+    existing_like = PostLike.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+    
+    if existing_like:
+        # User already liked, so unlike (remove the like)
+        db.session.delete(existing_like)
+        post.likes = max(0, post.likes - 1)
+        liked = False
+    else:
+        # User hasn't liked, so add like
+        new_like = PostLike(user_id=current_user.id, post_id=post_id)
+        db.session.add(new_like)
+        post.likes += 1
+        liked = True
+    
     db.session.commit()
-    return jsonify({'likes': post.likes})
+    return jsonify({'likes': post.likes, 'liked': liked})
 
 @app.route('/api/post/<int:post_id>/comments', methods=['GET', 'POST'])
 @login_required
@@ -560,6 +598,57 @@ def delete_post(post_id):
         'success': True,
         'message': 'Post deleted successfully'
     })
+
+@app.route('/api/complete_recipe/<int:recipe_id>', methods=['POST'])
+@login_required
+def complete_recipe(recipe_id):
+    """Handle recipe completion photo upload and post to community"""
+    recipe = Recipe.query.get_or_404(recipe_id)
+    
+    # Handle image upload
+    image_url = ''
+    if 'photo' in request.files:
+        file = request.files['photo']
+        if file and file.filename != '':
+            if allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                # Add timestamp to prevent filename collisions
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"{timestamp}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                image_url = f'/static/uploads/{filename}'
+    
+    # Create post content
+    content = f"🎉 Just cooked {recipe.title}! It was delicious! Check out my creation. 🍽️"
+    
+    # Create community post
+    post = Post(
+        content=content,
+        image_url=image_url,
+        recipe_link=f'/recipe/{recipe.id}',
+        user_id=current_user.id
+    )
+    db.session.add(post)
+    
+    # Update user progress
+    progress = Progress.query.filter_by(user_id=current_user.id).first()
+    if not progress:
+        progress = Progress(user_id=current_user.id, skill_name='Cooking')
+        db.session.add(progress)
+    
+    progress.completed_recipes += 1
+    progress.experience += 50
+    
+    # Level up if enough experience
+    if progress.experience >= 100:
+        progress.level += 1
+        progress.experience = 0
+    
+    db.session.commit()
+    
+    # Flash success message and redirect to community
+    flash('Recipe completed and shared to community!', 'success')
+    return redirect(url_for('community'))
 
 @app.route('/favorites')
 @login_required
@@ -649,29 +738,29 @@ def tutorials():
 def ai_chef():
     return render_template('ai_chef.html')
 
-@app.route('/api/ai-chef-chat', methods=['POST'])
-def ai_chef_chat():
-    data = request.json
-    message = data.get('message', '').strip()
-    
-    # Return a helpful response without using AI API
-    return jsonify({'response': "Hi! I'm Chef Kaya. I can help you with cooking tips and recipe suggestions. What would you like to know?"})
-
-
 @app.route('/meal-planner')
 @login_required
 def meal_planner():
-    # Get current user's meal plan for this week
+    from datetime import datetime, timedelta
+    
+    # Get current week's meal plan
     today = datetime.now().date()
     week_start = today - timedelta(days=today.weekday())
+    
+    print(f"DEBUG meal_planner: today={today}, week_start={week_start}")
     
     meal_plans = MealPlan.query.filter_by(
         user_id=current_user.id,
         week_start=week_start
     ).all()
     
-    # Generate AI meal plan if none exists
+    print(f"DEBUG meal_planner: Found {len(meal_plans)} meal plans for week {week_start}")
+    for mp in meal_plans[:3]:  # Log first 3
+        print(f"  - {mp.day} {mp.meal_type}: recipe_id={mp.recipe_id}")
+    
     if not meal_plans:
+        # If no meal plan exists for this week, generate one
+        print(f"DEBUG meal_planner: No plans found, generating...")
         recipes = Recipe.query.all()
         if recipes:
             days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -701,64 +790,226 @@ def meal_planner():
 @app.route('/api/generate-meal-plan', methods=['POST'])
 @login_required
 def generate_meal_plan():
-    preferences = request.json.get('preferences', {})
-    skill_level = current_user.skill_level
-    
-    recipes = Recipe.query.all()
-    if not recipes:
-        return jsonify({'error': 'No recipes available'})
-    
-    # Filter by difficulty based on skill level
-    if skill_level == 'beginner':
-        recipes = [r for r in recipes if r.difficulty in ['easy', 'beginner']]
-    elif skill_level == 'intermediate':
-        recipes = [r for r in recipes if r.difficulty in ['easy', 'medium', 'intermediate']]
-    
-    # Simple meal plan generation
-    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    meals = ['Breakfast', 'Lunch', 'Dinner']
-    
-    meal_plan = {}
-    for day in days:
-        meal_plan[day] = {}
-        for meal in meals:
-            if recipes:
-                recipe = random.choice(recipes)
-                meal_plan[day][meal] = {
-                    'id': recipe.id,
-                    'title': recipe.title,
-                    'cooking_time': recipe.cooking_time,
-                    'difficulty': recipe.difficulty
-                }
-    
-    return jsonify(meal_plan)
+    try:
+        preferences = request.json.get('preferences', {})
+        skill_level = getattr(current_user, 'skill_level', 'beginner')  # Safe attribute access with default
+        
+        print(f"DEBUG: Generating meal plan for user {current_user.id}, skill_level: {skill_level}")
+        
+        # Get current week's start date
+        today = datetime.now().date()
+        week_start = today - timedelta(days=today.weekday())
+        
+        # Delete existing meal plans for this week
+        deleted = MealPlan.query.filter_by(
+            user_id=current_user.id,
+            week_start=week_start
+        ).delete()
+        db.session.commit()
+        print(f"DEBUG: Deleted {deleted} existing meal plans")
+        
+        recipes = Recipe.query.all()
+        if not recipes:
+            print("DEBUG: No recipes found in database")
+            return jsonify({'error': 'No recipes available. Please add some recipes first.'}), 400
+        
+        print(f"DEBUG: Found {len(recipes)} recipes")
+        
+        # Filter by difficulty based on skill level
+        filtered_recipes = recipes
+        if skill_level == 'beginner':
+            filtered_recipes = [r for r in recipes if r.difficulty in ['easy', 'beginner']]
+        elif skill_level == 'intermediate':
+            filtered_recipes = [r for r in recipes if r.difficulty in ['easy', 'medium', 'intermediate']]
+        
+        # If no recipes after filtering, use all recipes
+        if not filtered_recipes:
+            print(f"DEBUG: No recipes match skill level {skill_level}, using all recipes")
+            filtered_recipes = recipes
+        
+        print(f"DEBUG: Using {len(filtered_recipes)} recipes for meal plan")
+        
+        # Generate and save meal plan
+        days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        meals = ['Breakfast', 'Lunch', 'Dinner']
+        
+        for day in days:
+            for meal in meals:
+                if filtered_recipes:
+                    recipe = random.choice(filtered_recipes)
+                    plan = MealPlan(
+                        user_id=current_user.id,
+                        day=day,
+                        meal_type=meal,
+                        recipe_id=recipe.id,
+                        week_start=week_start
+                    )
+                    db.session.add(plan)
+        
+        db.session.commit()
+        print(f"DEBUG: Successfully created meal plan with {len(days) * len(meals)} meals")
+        
+        return jsonify({'success': True, 'message': 'Meal plan generated successfully'})
+        
+    except Exception as e:
+        import traceback
+        error_msg = str(e)
+        print(f"ERROR: Failed to generate meal plan: {error_msg}")
+        print(f"Traceback: {traceback.format_exc()}")
+        db.session.rollback()
+        return jsonify({'error': f'Failed to generate meal plan: {error_msg}'}), 500
+
+@app.route('/api/test', methods=['GET'])
+def test_api():
+    return jsonify({'status': 'ok', 'message': 'API is working'})
+
+@app.route('/api/test-post', methods=['POST'])
+@login_required
+def test_post_api():
+    """Simple test endpoint that returns static JSON"""
+    data = request.json
+    return jsonify({
+        'status': 'ok',
+        'message': 'POST API is working',
+        'received': data
+    })
 
 @app.route('/api/generate-recipe', methods=['POST'])
 @login_required
 def generate_recipe():
+    print("DEBUG: generate_recipe called")
     data = request.json
     ingredients = data.get('ingredients', [])
     
+    print(f"DEBUG: ingredients = {ingredients}")
+    
     if not ingredients:
+        print("DEBUG: No ingredients provided")
         return jsonify({'error': 'No ingredients provided'}), 400
     
-    # Return a sample recipe without using AI
-    sample_recipe = {
-        'title': f'Delicious {ingredients[0].title()} Dish',
-        'description': f'A wonderful recipe featuring {", ".join(ingredients)}',
-        'difficulty': 'Medium',
-        'cooking_time': 30,
-        'ingredients': ingredients + ['Salt', 'Pepper', 'Olive oil'],
-        'instructions': [
-            'Prepare all ingredients',
-            'Heat oil in a pan',
-            'Cook ingredients together',
-            'Season and serve'
-        ],
-        'tips': 'Use fresh ingredients for best results'
-    }
-    
-    return jsonify({'recipe': sample_recipe})
+    try:
+        from groq import Groq
+        
+        # Use Groq API - Free tier available at console.groq.com
+        api_key = os.environ.get('GROQ_API_KEY', '')  # Get from environment variable
+        
+        # Create Groq client
+        client = Groq(api_key=api_key)
+        
+        # Create prompt for Groq
+        ingredients_str = ", ".join(ingredients)
+        prompt = f"""You are an expert chef with 20 years of experience. Create a professional, restaurant-quality recipe using these ingredients: {ingredients_str}.
+
+Please provide the response in this exact JSON format:
+{{
+    "title": "Creative, appetizing recipe name",
+    "description": "An enticing, mouth-watering description (2-3 sentences that make the dish sound delicious and professional)",
+    "difficulty": "Easy/Medium/Hard",
+    "cooking_time": 30 (estimated minutes, be realistic for a home cook),
+    "ingredients": ["ingredient 1 with exact quantity", "ingredient 2 with exact quantity", ...],
+    "instructions": [
+        "Step 1: Very detailed action - Start with preparation. Include specific knife cuts (dice, julienne, mince), measurements, and WHY this step matters",
+        "Step 2: Cooking technique - Specify exact heat level (medium-high, low simmer), pan type, oil temperature. Explain WHAT to look for (visual cues, sounds, smells)",
+        "Step 3: Layering flavors - Add ingredients in order. Include specific timing (2-3 minutes until golden, stir constantly for 30 seconds)",
+        "Step 4: Temperature control - Specify exact temperatures when possible (350°F, bring to gentle boil). Include resting times if needed",
+        "Step 5: Finishing touches - How to plate, garnish, or add final seasonings. Include presentation tips",
+        "Step 6-8: Continue with 3-4 more detailed steps covering resting, plating, and serving"
+    ],
+    "tips": "3-4 professional chef tips: include ingredient substitutions, common mistakes to avoid, wine pairings, storage tips, or reheating instructions"
+}}
+
+CRITICAL REQUIREMENTS:
+- Instructions MUST be extremely detailed - each step should be 2-4 sentences explaining the technique, timing, and why it matters
+- Include specific temperatures in Fahrenheit and cooking times
+- Mention visual cues (golden brown, translucent, bubbling)
+- Include chef secrets that make the difference between good and great
+- Suggest specific cookware (cast iron skillet, non-stick pan, Dutch oven) when relevant
+- Add technique tips (folding vs stirring, resting meat, tempering eggs)
+- Cooking time should account for prep AND cooking
+- Write like a Michelin-star chef teaching a passionate home cook
+
+Return ONLY the JSON object, nothing else before or after it."""
+
+        # Generate recipe with Groq (Llama 3.1 8B - fast and free)
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are a professional chef with 20 years of experience."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=2000
+        )
+        
+        ai_response = response.choices[0].message.content
+        
+        # Try to extract JSON from the response
+        try:
+            # Find JSON in the response
+            start_idx = ai_response.find('{')
+            end_idx = ai_response.rfind('}') + 1
+            if start_idx != -1 and end_idx != -1:
+                json_str = ai_response[start_idx:end_idx]
+                recipe_data = json.loads(json_str)
+            else:
+                recipe_data = json.loads(ai_response)
+            
+            return jsonify({'recipe': recipe_data})
+            
+        except json.JSONDecodeError as je:
+            print(f"DEBUG: JSON decode error: {je}")
+            print(f"DEBUG: ai_response was: {ai_response[:200]}")
+            # If parsing fails, return enhanced mock response
+            sample_recipe = {
+                'title': f'Pan-Seared {ingredients[0].title()} with Herb Butter',
+                'description': f'A restaurant-quality dish featuring fresh {", ".join(ingredients)}. This recipe brings together classic techniques with modern flavors.',
+                'difficulty': 'Medium',
+                'cooking_time': 35,
+                'ingredients': ingredients + ['2 tbsp butter', '2 cloves garlic', 'Fresh herbs', 'Salt and pepper'],
+                'instructions': [
+                    'Step 1: Preparation - Wash and dry all ingredients. Cut into uniform pieces for even cooking.',
+                    'Step 2: Heat Control - Preheat skillet over medium-high heat for 3-4 minutes until hot.',
+                    'Step 3: Sear - Add ingredients to hot pan. Don\'t move for 2-3 minutes to develop golden crust.',
+                    'Step 4: Build Flavor - Add aromatics and stir for 30 seconds until fragrant.',
+                    'Step 5: Deglaze - Add liquid to release browned bits from pan bottom.',
+                    'Step 6: Finish - Add butter and herbs, swirl to create glossy sauce.',
+                    'Step 7: Rest - Let dish rest 2-3 minutes off heat for juices to redistribute.',
+                    'Step 8: Plate - Serve hot with sauce spooned over top.'
+                ],
+                'tips': 'Pro Tips: Use room temperature ingredients. Don\'t overcrowd the pan. Season at every stage. Pair with crisp white wine.'
+            }
+            return jsonify({'recipe': sample_recipe})
+            
+    except Exception as e:
+        import traceback
+        error_msg = str(e)
+        print(f"DEBUG: AI Error: {error_msg}")
+        print(f"DEBUG: Full traceback: {traceback.format_exc()}")
+        # Log error to file for debugging
+        with open('ai_error.log', 'a', encoding='utf-8') as f:
+            f.write(f"\n=== ERROR at {datetime.now()} ===\n")
+            f.write(f"Error: {error_msg}\n")
+            f.write(f"Traceback:\n{traceback.format_exc()}\n")
+        # Return enhanced fallback mock recipe on any error
+        sample_recipe = {
+            'title': f'Pan-Seared {ingredients[0].title()} with Herb Butter',
+            'description': f'A restaurant-quality dish featuring fresh {", ".join(ingredients)}. This recipe brings together classic techniques with modern flavors for an unforgettable dining experience.',
+            'difficulty': 'Medium',
+            'cooking_time': 35,
+            'ingredients': ingredients + ['2 tbsp butter', '2 cloves garlic, minced', '1 tsp fresh herbs', 'Salt and pepper to taste', '1 tbsp olive oil'],
+            'instructions': [
+                'Step 1: Preparation - Wash and dry all ingredients thoroughly. Cut vegetables into uniform pieces (1/2 inch dice) to ensure even cooking. Pat proteins dry with paper towels to achieve a perfect sear.',
+                'Step 2: Heat Control - Preheat a heavy-bottomed skillet (cast iron preferred) over medium-high heat for 3-4 minutes until a drop of water sizzles immediately. Add olive oil and swirl to coat.',
+                'Step 3: Sear - Add the main ingredient to the hot pan. Do not move it for 2-3 minutes to develop a golden-brown crust. Listen for the sizzle - it should be audible but not violent.',
+                'Step 4: Build Flavor - Add aromatics (garlic, onions) and stir constantly for 30 seconds until fragrant. The kitchen should smell amazing at this point.',
+                'Step 5: Deglaze - Add a splash of liquid (wine, broth, or water) to release the fond (browned bits) from the bottom of the pan. Scrape with a wooden spoon.',
+                'Step 6: Finish - Reduce heat to low, add butter and fresh herbs. Swirl the pan to create a glossy sauce. The butter should foam but not burn.',
+                'Step 7: Rest and Plate - Let the dish rest for 2-3 minutes off heat. This allows juices to redistribute. Plate with the sauce spooned over top.',
+                'Step 8: Garnish - Add fresh herbs, a drizzle of good olive oil, or a squeeze of lemon just before serving for brightness.'
+            ],
+            'tips': 'Pro Tips: (1) Use room temperature ingredients for more even cooking. (2) Don\'t overcrowd the pan - cook in batches if needed. (3) Season at every stage, not just at the end. (4) Pair with a crisp white wine or light beer.'
+        }
+        return jsonify({'recipe': sample_recipe})
 
 @app.route('/api/save-generated-recipe', methods=['POST'])
 @login_required
@@ -798,6 +1049,81 @@ def save_generated_recipe():
     except Exception as e:
         print(f"Save recipe error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ai-chef-chat', methods=['POST'])
+@login_required
+def ai_chef_chat():
+    """AI Chef Assistant chat endpoint"""
+    data = request.json
+    message = data.get('message', '')
+    context = data.get('context', '')  # Recipe name or ingredients context
+    
+    if not message:
+        return jsonify({'error': 'No message provided'}), 400
+    
+    try:
+        from groq import Groq
+        
+        # Use Groq API - Free tier available at console.groq.com
+        api_key = os.environ.get('GROQ_API_KEY', '')  # Get from environment variable
+        
+        # Create Groq client
+        client = Groq(api_key=api_key)
+        
+        # Create system prompt with context
+        system_prompt = """You are Chef Kaya, an expert AI cooking assistant with 20 years of culinary experience. 
+You help home cooks with:
+- Ingredient substitutions and alternatives
+- Cooking tips and techniques
+- Recipe troubleshooting
+- Timing and temperature advice
+- Storage and meal prep tips
+
+Respond in a friendly, encouraging tone. Be specific and practical in your advice."""
+        
+        if context:
+            system_prompt += f"\n\nCurrent recipe context: {context}"
+        
+        # Generate response with Groq
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": message}
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+        
+        ai_response = response.choices[0].message.content
+        return jsonify({'response': ai_response})
+        
+    except Exception as e:
+        print(f"AI Chef Chat Error: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        # Return fallback response with helpful pre-written responses
+        demo_responses = {
+            'substitutions': "Here are some common substitutions:\n• Butter → Olive oil or coconut oil\n• Eggs → Applesauce or flax eggs\n• Milk → Almond milk or oat milk\n• Sugar → Honey or maple syrup\n• All-purpose flour → Almond flour (use 3/4 amount)",
+            'tips': "Here are some pro cooking tips:\n• Always preheat your pan before adding ingredients\n• Season at every stage, not just at the end\n• Let meat rest after cooking for juicier results\n• Use a sharp knife - it's safer than a dull one\n• Read the entire recipe before starting",
+            'timing': "Cooking time tips:\n• Prep all ingredients before you start cooking (mise en place)\n• Use a timer to avoid overcooking\n• Let proteins come to room temperature before cooking\n• Rest meat for 5-10 minutes after cooking",
+            'storage': "Storage tips:\n• Store herbs in water like flowers\n• Keep potatoes and onions separate\n• Freeze leftover wine in ice cube trays for cooking\n• Label and date everything in the freezer",
+        }
+        
+        # Check message keywords for appropriate response
+        msg_lower = message.lower()
+        if any(word in msg_lower for word in ['substitute', 'replacement', 'instead of', 'swap']):
+            response_text = demo_responses['substitutions']
+        elif any(word in msg_lower for word in ['tip', 'trick', 'advice', 'secret']):
+            response_text = demo_responses['tips']
+        elif any(word in msg_lower for word in ['time', 'how long', 'when', 'minute']):
+            response_text = demo_responses['timing']
+        elif any(word in msg_lower for word in ['store', 'keep', 'save', 'leftover', 'fridge', 'freezer']):
+            response_text = demo_responses['storage']
+        else:
+            response_text = f"Hi! I'm Chef Kaya. You asked about: '{message}'\n\nI'm here to help with:\n• Ingredient substitutions\n• Cooking tips and techniques\n• Recipe suggestions\n• Timing and storage advice\n\nWhat would you like to know more about?"
+        
+        return jsonify({'response': response_text})
 
 # Admin Routes
 @app.route('/admin')

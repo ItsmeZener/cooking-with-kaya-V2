@@ -54,29 +54,56 @@
                 </div>
             </div>
             
-            <!-- Hero Image/Card -->
+            <!-- Hero Recipe Carousel -->
             <div class="hidden lg:block relative">
                 <div class="relative">
                     <!-- Decorative Elements -->
                     <div class="absolute -top-10 -right-10 w-72 h-72 bg-orange-500/30 rounded-full blur-3xl"></div>
                     <div class="absolute -bottom-10 -left-10 w-72 h-72 bg-red-500/30 rounded-full blur-3xl"></div>
                     
-                    <!-- Featured Recipe Card -->
-                    <div class="relative bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-2xl">
-                        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600" alt="Healthy Food" class="w-full h-64 object-cover rounded-2xl mb-4">
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-xs font-medium">Healthy</span>
-                            <span class="px-3 py-1 bg-white/10 text-white/70 rounded-full text-xs font-medium">30 min</span>
+                    <!-- Recipe Carousel Slideshow -->
+                    <div id="hero-recipe-carousel" class="relative bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 shadow-2xl overflow-hidden">
+                        {% for recipe in recipes %}
+                        <div class="hero-recipe-slide {% if loop.first %}active{% else %}hidden{% endif %}" data-index="{{ loop.index0 }}">
+                            <a href="{{ url_for('recipe_detail', recipe_id=recipe.id) }}" class="block">
+                                {% if recipe.image_url %}
+                                <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-64 object-cover rounded-2xl mb-4">
+                                {% else %}
+                                <div class="w-full h-64 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl mb-4 flex items-center justify-center">
+                                    <i class="fas fa-utensils text-6xl text-white/50"></i>
+                                </div>
+                                {% endif %}
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-xs font-medium">{{ recipe.category|default('Recipe') }}</span>
+                                    <span class="px-3 py-1 bg-white/10 text-white/70 rounded-full text-xs font-medium">{{ recipe.cooking_time }} min</span>
+                                </div>
+                                <h3 class="text-white text-xl font-bold mb-2 line-clamp-1">{{ recipe.title }}</h3>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex -space-x-2">
+                                        <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold border-2 border-white/20">
+                                            {{ recipe.author.username[0]|upper }}
+                                        </div>
+                                    </div>
+                                    <span class="text-white/60 text-sm">by {{ recipe.author.username }}</span>
+                                </div>
+                            </a>
                         </div>
-                        <h3 class="text-white text-xl font-bold mb-2">Fresh Garden Salad Bowl</h3>
-                        <div class="flex items-center gap-3">
-                            <div class="flex -space-x-2">
-                                <div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
-                                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">B</div>
-                                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">C</div>
-                            </div>
-                            <span class="text-white/60 text-sm">+2.5k tried this</span>
+                        {% endfor %}
+                        
+                        <!-- Carousel Indicators -->
+                        <div class="flex justify-center gap-2 mt-4">
+                            {% for recipe in recipes %}
+                            <button onclick="showHeroSlide({{ loop.index0 }})" class="hero-carousel-dot w-2 h-2 rounded-full bg-white/30 hover:bg-white/60 transition-all {% if loop.first %}bg-white w-6{% endif %}" data-index="{{ loop.index0 }}"></button>
+                            {% endfor %}
                         </div>
+                        
+                        <!-- Navigation Arrows -->
+                        <button onclick="prevHeroSlide()" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button onclick="nextHeroSlide()" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -174,52 +201,76 @@
     </div>
 </section>
 
-<!-- Featured Recipes -->
+<!-- Recently Added Recipes Carousel -->
 <section class="py-24 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-4">
             <div>
-                <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Discover</span>
-                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mt-2">Featured Recipes</h2>
-                <p class="text-xl text-gray-600 mt-3">Hand-picked recipes to inspire your next meal</p>
+                <span class="text-orange-500 font-semibold text-sm uppercase tracking-wider">Fresh from the Kitchen</span>
+                <h2 class="text-4xl lg:text-5xl font-bold text-gray-900 mt-2">Recently Added</h2>
+                <p class="text-xl text-gray-600 mt-3">Latest recipes shared by our community</p>
             </div>
-            <a href="{{ url_for('recipes') }}" class="group inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300">
-                View All Recipes
-                <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-            </a>
+            <div class="flex gap-3">
+                <button onclick="scrollCarousel('left')" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-orange-50 transition-all duration-300 group">
+                    <i class="fas fa-chevron-left text-gray-600 group-hover:text-orange-500"></i>
+                </button>
+                <button onclick="scrollCarousel('right')" class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-orange-50 transition-all duration-300 group">
+                    <i class="fas fa-chevron-right text-gray-600 group-hover:text-orange-500"></i>
+                </button>
+            </div>
         </div>
         
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {% for recipe in recipes %}
-            <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                <div class="relative h-56 overflow-hidden">
-                    {% if recipe.image_url %}
-                    <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                    {% else %}
-                    <div class="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                        <i class="fas fa-utensils text-6xl text-white/50"></i>
+        <!-- Carousel Container -->
+        <div id="recipe-carousel" class="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" style="scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none;">
+            {% for recipe in recipes|sort(attribute='created_at', reverse=True) %}
+            <div class="flex-none w-80 snap-start">
+                <div class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                    <div class="relative h-56 overflow-hidden">
+                        {% if recipe.image_url %}
+                        <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                            <i class="fas fa-utensils text-6xl text-white/50"></i>
+                        </div>
+                        {% endif %}
+                        <div class="absolute top-4 right-4">
+                            <span class="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full text-xs font-semibold shadow-sm">
+                                {{ recipe.difficulty|title }}
+                            </span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-                    {% endif %}
-                    <div class="absolute top-4 right-4">
-                        <span class="px-3 py-1.5 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full text-xs font-semibold shadow-sm">
-                            {{ recipe.difficulty|title }}
-                        </span>
+                    <div class="p-6">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="px-3 py-1 bg-orange-500/20 text-orange-600 rounded-full text-xs font-medium">{{ recipe.category|default('Recipe') }}</span>
+                            <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium"><i class="far fa-clock mr-1"></i>{{ recipe.cooking_time }} min</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-1">{{ recipe.title }}</h3>
+                        <p class="text-gray-600 mb-4 line-clamp-2 text-sm leading-relaxed">{{ recipe.description or 'A delicious recipe waiting for you to try.' }}</p>
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <div class="flex -space-x-2">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                                        {{ recipe.author.username[0]|upper }}
+                                    </div>
+                                </div>
+                                <span class="text-sm text-gray-500">by {{ recipe.author.username }}</span>
+                            </div>
+                            <a href="{{ url_for('recipe_detail', recipe_id=recipe.id) }}" class="text-orange-500 hover:text-orange-600 font-semibold text-sm">
+                                View <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </div>
                     </div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center gap-4 mb-3 text-sm text-gray-500">
-                        <span class="flex items-center gap-1"><i class="far fa-clock"></i> {{ recipe.cooking_time }} min</span>
-                        <span class="flex items-center gap-1"><i class="fas fa-fire"></i> {{ recipe.cooking_time // 10 }} min prep</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">{{ recipe.title }}</h3>
-                    <p class="text-gray-600 mb-4 line-clamp-2 text-sm leading-relaxed">{{ recipe.description or 'A delicious recipe waiting for you to try.' }}</p>
-                    <a href="{{ url_for('recipe_detail', recipe_id=recipe.id) }}" class="inline-flex items-center gap-2 text-orange-500 font-semibold group-hover:text-orange-600 transition-colors">
-                        View Recipe <i class="fas fa-arrow-right text-sm group-hover:translate-x-1 transition-transform"></i>
-                    </a>
                 </div>
             </div>
             {% endfor %}
+        </div>
+        
+        <div class="text-center mt-8">
+            <a href="{{ url_for('recipes') }}" class="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-full font-semibold hover:bg-gray-800 transition-all duration-300">
+                View All Recipes
+                <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
     </div>
 </section>
@@ -330,11 +381,90 @@
 
 {% block extra_css %}
 <style>
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
 .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Recently Added Recipes Carousel
+function scrollCarousel(direction) {
+    const carousel = document.getElementById('recipe-carousel');
+    const scrollAmount = 400; // Width of card + gap
+    
+    if (direction === 'left') {
+        carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } else {
+        carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+}
+
+// Hero Recipe Carousel Slideshow
+let currentHeroSlide = 0;
+
+function showHeroSlide(index) {
+    const slides = document.querySelectorAll('.hero-recipe-slide');
+    const dots = document.querySelectorAll('.hero-carousel-dot');
+    
+    if (slides.length === 0) return;
+    
+    // Wrap around
+    if (index >= slides.length) index = 0;
+    if (index < 0) index = slides.length - 1;
+    
+    currentHeroSlide = index;
+    
+    // Hide all slides
+    slides.forEach(slide => {
+        slide.classList.add('hidden');
+        slide.classList.remove('active');
+    });
+    
+    // Show current slide
+    slides[index].classList.remove('hidden');
+    slides[index].classList.add('active');
+    
+    // Update dots
+    dots.forEach((dot, i) => {
+        if (i === index) {
+            dot.classList.add('bg-white', 'w-6');
+            dot.classList.remove('bg-white/30');
+        } else {
+            dot.classList.remove('bg-white', 'w-6');
+            dot.classList.add('bg-white/30');
+        }
+    });
+}
+
+function nextHeroSlide() {
+    showHeroSlide(currentHeroSlide + 1);
+}
+
+function prevHeroSlide() {
+    showHeroSlide(currentHeroSlide - 1);
+}
+
+// Auto-advance hero carousel every 5 seconds
+setInterval(() => {
+    nextHeroSlide();
+}, 5000);
+</script>
 {% endblock %}

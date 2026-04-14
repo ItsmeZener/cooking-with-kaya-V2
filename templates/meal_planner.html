@@ -43,7 +43,7 @@
                     </div>
                 </div>
                 
-                <button onclick="generateMealPlan()" id="generate-btn" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-10 py-4 rounded-xl font-bold text-lg transition hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5">
+                <button type="button" id="generate-btn" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-10 py-4 rounded-xl font-bold text-lg transition hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5">
                     <i class="fas fa-magic"></i>Generate New Meal Plan
                 </button>
             </div>
@@ -103,36 +103,40 @@
             </div>
             <h3 class="text-2xl font-bold text-gray-900 mb-3">No meal plan yet</h3>
             <p class="text-gray-600 mb-6">Generate a personalized meal plan to get started!</p>
-            <button onclick="generateMealPlan()" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-bold transition hover:shadow-lg hover:shadow-emerald-500/30">
+            <button type="button" id="generate-btn-empty" class="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-bold transition hover:shadow-lg hover:shadow-emerald-500/30">
                 <i class="fas fa-magic"></i>Generate Meal Plan
             </button>
         </div>
         {% endif %}
         
-        <!-- Nutritional Summary -->
+        <!-- Weekly Overview - Dynamic Stats -->
         {% if meal_plans %}
+        {% set total_meals = meal_plans|length %}
+        {% set total_time = meal_plans|map(attribute='recipe.cooking_time')|sum %}
+        {% set avg_time = (total_time / total_meals)|round|int if total_meals > 0 else 0 %}
+        {% set unique_recipes = meal_plans|map(attribute='recipe_id')|unique|list %}
         <div class="mt-12 bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
             <h2 class="text-2xl font-bold text-gray-900 mb-6">Weekly Overview</h2>
             <div class="grid md:grid-cols-4 gap-6">
                 <div class="text-center p-6 bg-orange-50 rounded-xl border border-orange-100">
                     <i class="fas fa-fire text-3xl text-orange-500 mb-3"></i>
-                    <p class="text-3xl font-bold text-gray-900">21</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_meals }}</p>
                     <p class="text-gray-600">Meals Planned</p>
                 </div>
                 <div class="text-center p-6 bg-blue-50 rounded-xl border border-blue-100">
                     <i class="fas fa-clock text-3xl text-blue-500 mb-3"></i>
-                    <p class="text-3xl font-bold text-gray-900">~35</p>
+                    <p class="text-3xl font-bold text-gray-900">~{{ avg_time }}</p>
                     <p class="text-gray-600">Avg Min/Meal</p>
                 </div>
                 <div class="text-center p-6 bg-emerald-50 rounded-xl border border-emerald-100">
                     <i class="fas fa-shopping-basket text-3xl text-emerald-500 mb-3"></i>
-                    <p class="text-3xl font-bold text-gray-900">~15</p>
-                    <p class="text-gray-600">Ingredients</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ unique_recipes|length }}</p>
+                    <p class="text-gray-600">Unique Recipes</p>
                 </div>
                 <div class="text-center p-6 bg-purple-50 rounded-xl border border-purple-100">
                     <i class="fas fa-chart-pie text-3xl text-purple-500 mb-3"></i>
-                    <p class="text-3xl font-bold text-gray-900">Balanced</p>
-                    <p class="text-gray-600">Meal Variety</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ (total_time / 60)|round(1) }}h</p>
+                    <p class="text-gray-600">Total Cooking Time</p>
                 </div>
             </div>
         </div>
@@ -155,38 +159,81 @@
 </section>
 
 <script>
+console.log('Meal planner script loaded');
+
 async function generateMealPlan() {
+    console.log('generateMealPlan() called');
+    
     const btn = document.getElementById('generate-btn');
     const loading = document.getElementById('loading');
     const container = document.getElementById('meal-plan-container');
+    
+    console.log('Button:', btn);
+    console.log('Loading:', loading);
+    console.log('Container:', container);
     
     if (btn) btn.disabled = true;
     if (loading) loading.classList.remove('hidden');
     if (container) container.classList.add('opacity-50');
     
     try {
+        console.log('Sending fetch request to /api/generate-meal-plan');
         const response = await fetch('/api/generate-meal-plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ preferences: {} })
         });
         
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
         if (response.ok) {
-            // Reload the page to show new plan
+            console.log('Success! Reloading page...');
             window.location.reload();
         } else {
-            alert('Failed to generate meal plan. Please try again.');
+            console.log('Error from server:', data.error);
+            const errorMsg = data.error || 'Failed to generate meal plan. Please try again.';
+            alert('Error: ' + errorMsg);
             if (loading) loading.classList.add('hidden');
             if (container) container.classList.remove('opacity-50');
             if (btn) btn.disabled = false;
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('Failed to generate meal plan. Please try again.');
+        console.error('Fetch error:', error);
+        alert('Network error. Please check your connection and try again.');
         if (loading) loading.classList.add('hidden');
         if (container) container.classList.remove('opacity-50');
         if (btn) btn.disabled = false;
     }
 }
+
+// Add event listeners when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, attaching event listeners');
+    
+    const btn = document.getElementById('generate-btn');
+    const btnEmpty = document.getElementById('generate-btn-empty');
+    
+    console.log('Button element found:', btn);
+    console.log('Button exists check:', !!btn);
+    
+    if (btn) {
+        console.log('Attaching listener to generate-btn');
+        btn.addEventListener('click', function(e) {
+            console.log('Button clicked!');
+            e.preventDefault();
+            generateMealPlan();
+        });
+        console.log('Listener attached successfully');
+    } else {
+        console.error('ERROR: generate-btn not found!');
+    }
+    
+    if (btnEmpty) {
+        console.log('Attaching listener to generate-btn-empty');
+        btnEmpty.addEventListener('click', generateMealPlan);
+    }
+});
 </script>
 {% endblock %}

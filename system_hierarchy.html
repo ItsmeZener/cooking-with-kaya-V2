@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cooking with Kaya - System Hierarchy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 40px;
+            font-size: 28px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 10px;
+            display: inline-block;
+            left: 50%;
+            position: relative;
+            transform: translateX(-50%);
+        }
+        
+        .tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .level {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: 30px;
+            width: 100%;
+        }
+        
+        .node {
+            background: white;
+            border: 3px solid #333;
+            padding: 15px 25px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            min-width: 140px;
+            position: relative;
+        }
+        
+        .node.main {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            border-color: #c0392b;
+            font-size: 18px;
+            padding: 20px 40px;
+        }
+        
+        .node.role {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+            border-color: #16a085;
+            font-size: 16px;
+        }
+        
+        .node.feature {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            border-color: #d35400;
+            font-size: 13px;
+            min-width: 120px;
+        }
+        
+        .node.sub-feature {
+            background: #ecf0f1;
+            border-color: #95a5a6;
+            color: #2c3e50;
+            font-size: 12px;
+            font-weight: normal;
+            min-width: 110px;
+            padding: 10px 15px;
+        }
+        
+        .branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .sub-branches {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 500px;
+        }
+        
+        .feature-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        
+        .sub-features {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        /* Connector lines */
+        .connector {
+            width: 2px;
+            height: 20px;
+            background: #333;
+            margin: 0 auto;
+        }
+        
+        .horizontal-line {
+            height: 2px;
+            background: #333;
+            width: 100%;
+            position: absolute;
+            top: -20px;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>COOKING WITH KAYA - RECIPE SHARING PLATFORM</h1>
+        
+        <div class="tree">
+            <!-- Root -->
+            <div class="node main">COOKING WITH KAYA</div>
+            
+            <div class="connector"></div>
+            
+            <!-- Level 1: User Types -->
+            <div class="level">
+                <div class="branch">
+                    <div class="node role">SYSTEM ADMIN</div>
+                    
+                    <div class="sub-branches">
+                        <div class="feature-group">
+                            <div class="node feature">User Management</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">View All Users</div>
+                                <div class="node sub-feature">Manage Users</div>
+                                <div class="node sub-feature">Suspend/Reactivate</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Recipe Management</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">View All Recipes</div>
+                                <div class="node sub-feature">Approve Recipes</div>
+                                <div class="node sub-feature">Delete Recipes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Content Oversight</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Monitor Posts</div>
+                                <div class="node sub-feature">Delete Posts</div>
+                                <div class="node sub-feature">View Reports</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Dashboard</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">View Statistics</div>
+                                <div class="node sub-feature">User Analytics</div>
+                                <div class="node sub-feature">Recipe Stats</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="branch">
+                    <div class="node role">REGULAR USER</div>
+                    
+                    <div class="sub-branches">
+                        <div class="feature-group">
+                            <div class="node feature">Recipe Discovery</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Browse Recipes</div>
+                                <div class="node sub-feature">Search Recipes</div>
+                                <div class="node sub-feature">Filter by Category</div>
+                                <div class="node sub-feature">View Recipe Details</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Recipe Management</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Add New Recipe</div>
+                                <div class="node sub-feature">Edit Own Recipe</div>
+                                <div class="node sub-feature">Delete Own Recipe</div>
+                                <div class="node sub-feature">Upload Photos</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">AI Chef Assistant</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Chat with AI Chef</div>
+                                <div class="node sub-feature">Ask Cooking Tips</div>
+                                <div class="node sub-feature">Get Substitutions</div>
+                                <div class="node sub-feature">Generate Recipes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Meal Planner</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Generate Weekly Plan</div>
+                                <div class="node sub-feature">View Meal Schedule</div>
+                                <div class="node sub-feature">Customize Meals</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Cooking Mode</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Step-by-Step Guide</div>
+                                <div class="node sub-feature">Voice Assistant</div>
+                                <div class="node sub-feature">Progress Tracking</div>
+                                <div class="node sub-feature">Completion Rewards</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Community</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Create Posts</div>
+                                <div class="node sub-feature">View Posts</div>
+                                <div class="node sub-feature">Like Posts</div>
+                                <div class="node sub-feature">Comment on Posts</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Profile Management</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Edit Profile</div>
+                                <div class="node sub-feature">Upload Avatar</div>
+                                <div class="node sub-feature">Set Skill Level</div>
+                                <div class="node sub-feature">Set Preferences</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Favorites</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">Save Recipes</div>
+                                <div class="node sub-feature">View Favorites</div>
+                                <div class="node sub-feature">Remove Favorites</div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-group">
+                            <div class="node feature">Progress Tracking</div>
+                            <div class="sub-features">
+                                <div class="node sub-feature">View Skill Level</div>
+                                <div class="node sub-feature">Track Completed Recipes</div>
+                                <div class="node sub-feature">Earn Experience</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

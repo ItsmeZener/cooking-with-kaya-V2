@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cooking with Kaya - Use Case Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 28px;
+        }
+        
+        .diagram {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* System Boundary */
+        .system-boundary {
+            border: 3px solid #3498db;
+            border-radius: 15px;
+            padding: 30px 40px;
+            background: #f8f9fa;
+            flex: 1;
+            margin: 0 40px;
+        }
+        
+        .system-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+            display: inline-block;
+            position: relative;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        /* Use Cases Container */
+        .use-cases {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        /* Use Case (Oval) */
+        .use-case {
+            background: white;
+            border: 2px solid #2c3e50;
+            border-radius: 50%;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 120px;
+            max-width: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .use-case:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .use-case.primary {
+            border-color: #e74c3c;
+            background: #fdf2f2;
+        }
+        
+        .use-case.secondary {
+            border-color: #3498db;
+            background: #ebf5fb;
+        }
+        
+        .use-case.admin {
+            border-color: #9b59b6;
+            background: #f5eef8;
+        }
+        
+        /* Actor */
+        .actor {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+        
+        .actor-icon {
+            width: 50px;
+            height: 80px;
+            position: relative;
+        }
+        
+        .actor-head {
+            width: 20px;
+            height: 20px;
+            background: #2c3e50;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+        
+        .actor-body {
+            width: 2px;
+            height: 30px;
+            background: #2c3e50;
+            margin: 0 auto;
+        }
+        
+        .actor-arms {
+            width: 40px;
+            height: 2px;
+            background: #2c3e50;
+            margin: -15px auto 0;
+        }
+        
+        .actor-legs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: -2px;
+        }
+        
+        .actor-leg {
+            width: 2px;
+            height: 25px;
+            background: #2c3e50;
+        }
+        
+        .actor-name {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .actor.user .actor-head,
+        .actor.user .actor-body,
+        .actor.user .actor-arms,
+        .actor.user .actor-leg {
+            background: #e67e22;
+        }
+        
+        .actor.admin .actor-head,
+        .actor.admin .actor-body,
+        .actor.admin .actor-arms,
+        .actor.admin .actor-leg {
+            background: #8e44ad;
+        }
+        
+        /* Relationship Lines */
+        .relationship {
+            position: absolute;
+            border-top: 2px dashed #7f8c8d;
+        }
+        
+        /* Legend */
+        .legend {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .legend h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .legend-items {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .legend-symbol {
+            width: 30px;
+            height: 20px;
+            border: 2px solid #2c3e50;
+            border-radius: 50%;
+        }
+        
+        .legend-actor {
+            width: 20px;
+            height: 30px;
+            border: 2px solid #2c3e50;
+            border-radius: 50% 50% 0 0;
+        }
+        
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>USE CASE DIAGRAM<br>Cooking with Kaya - Recipe Sharing Platform</h1>
+        
+        <div class="diagram">
+            <!-- Actor: User -->
+            <div class="actor user">
+                <div class="actor-icon">
+                    <div class="actor-head"></div>
+                    <div class="actor-body"></div>
+                    <div class="actor-arms"></div>
+                    <div class="actor-legs">
+                        <div class="actor-leg"></div>
+                        <div class="actor-leg"></div>
+                    </div>
+                </div>
+                <div class="actor-name">User<br>(Home Cook)</div>
+            </div>
+            
+            <!-- System Boundary -->
+            <div class="system-boundary">
+                <div class="system-title">Cooking with Kaya System</div>
+                
+                <div class="use-cases">
+                    <!-- User Use Cases -->
+                    <div class="use-case primary">Register Account</div>
+                    <div class="use-case primary">Login/Logout</div>
+                    <div class="use-case primary">Manage Profile</div>
+                    <div class="use-case secondary">Browse Recipes</div>
+                    <div class="use-case secondary">Search & Filter</div>
+                    <div class="use-case secondary">Add Recipe</div>
+                    <div class="use-case secondary">Edit Recipe</div>
+                    <div class="use-case secondary">Delete Recipe</div>
+                    <div class="use-case secondary">View Recipe Details</div>
+                    <div class="use-case primary">Chat with AI Chef</div>
+                    <div class="use-case primary">Generate Recipe with AI</div>
+                    <div class="use-case primary">Get Cooking Tips</div>
+                    <div class="use-case secondary">Create Meal Plan</div>
+                    <div class="use-case secondary">View Meal Schedule</div>
+                    <div class="use-case secondary">Customize Meals</div>
+                    <div class="use-case primary">Use Cooking Mode</div>
+                    <div class="use-case primary">Track Cooking Progress</div>
+                    <div class="use-case primary">Upload Cooking Photo</div>
+                    <div class="use-case secondary">Create Community Post</div>
+                    <div class="use-case secondary">Like Post</div>
+                    <div class="use-case secondary">Comment on Post</div>
+                    <div class="use-case secondary">Save Recipe to Favorites</div>
+                    <div class="use-case secondary">View Favorites</div>
+                    <div class="use-case primary">View Skill Progress</div>
+                    <div class="use-case primary">Earn Experience Points</div>
+                    
+                    <!-- Admin Use Cases -->
+                    <div class="use-case admin">Manage All Users</div>
+                    <div class="use-case admin">Suspend/Reactivate User</div>
+                    <div class="use-case admin">Approve Recipes</div>
+                    <div class="use-case admin">Delete Any Recipe</div>
+                    <div class="use-case admin">Monitor Community Posts</div>
+                    <div class="use-case admin">Delete Inappropriate Content</div>
+                    <div class="use-case admin">View System Analytics</div>
+                    <div class="use-case admin">Generate Reports</div>
+                </div>
+            </div>
+            
+            <!-- Actor: Admin -->
+            <div class="actor admin">
+                <div class="actor-icon">
+                    <div class="actor-head"></div>
+                    <div class="actor-body"></div>
+                    <div class="actor-arms"></div>
+                    <div class="actor-legs">
+                        <div class="actor-leg"></div>
+                        <div class="actor-leg"></div>
+                    </div>
+                </div>
+                <div class="actor-name">Admin</div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h3>Legend</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-actor" style="background: #e67e22;"></div>
+                    <span>Actor: User (Home Cook)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-actor" style="background: #8e44ad;"></div>
+                    <span>Actor: Admin</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol" style="border-color: #e74c3c; background: #fdf2f2;"></div>
+                    <span>User Account Use Case</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol" style="border-color: #3498db; background: #ebf5fb;"></div>
+                    <span>Recipe/Content Use Case</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-symbol" style="border-color: #9b59b6; background: #f5eef8;"></div>
+                    <span>Admin Use Case</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

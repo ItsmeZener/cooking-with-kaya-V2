@@ -127,7 +127,6 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-bold text-gray-900 truncate">View Recipe</p>
-                            <p class="text-xs text-gray-500 truncate">{{ post.recipe_link }}</p>
                         </div>
                         <i class="fas fa-external-link-alt text-gray-400"></i>
                     </a>
@@ -154,9 +153,9 @@
                 <!-- Action Buttons -->
                 <div class="px-5 py-2 flex items-center justify-between border-t border-gray-100">
                     {% if current_user.is_authenticated %}
-                    <button class="like-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-rose-50 transition group" data-post-id="{{ post.id }}">
-                        <i class="far fa-heart text-gray-500 group-hover:text-rose-500 text-lg transition"></i>
-                        <span class="text-gray-600 font-medium group-hover:text-rose-500">Like</span>
+                    <button class="like-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-rose-50 transition group {% if post.id in liked_post_ids %}liked{% endif %}" data-post-id="{{ post.id }}">
+                        <i class="{% if post.id in liked_post_ids %}fas text-rose-500{% else %}far text-gray-500{% endif %} fa-heart group-hover:text-rose-500 text-lg transition"></i>
+                        <span class="{% if post.id in liked_post_ids %}text-rose-500{% else %}text-gray-600{% endif %} font-medium group-hover:text-rose-500">{% if post.id in liked_post_ids %}Liked{% else %}Like{% endif %}</span>
                     </button>
                     <button class="comments-btn flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl hover:bg-blue-50 transition group" data-post-id="{{ post.id }}">
                         <i class="far fa-comment text-gray-500 group-hover:text-blue-500 text-lg transition"></i>
@@ -249,7 +248,7 @@ function clearImage() {
     input.value = '';
 }
 
-// Like post functionality
+// Like/Unlike post functionality (toggle)
 async function likePost(postId) {
     try {
         const response = await fetch(`/api/like_post/${postId}`, {
@@ -266,19 +265,31 @@ async function likePost(postId) {
                 likesCount.textContent = data.likes;
             }
             
-            // Animate heart icon
+            // Toggle heart icon based on liked status
             const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
             if (likeBtn) {
                 const icon = likeBtn.querySelector('i');
                 const text = likeBtn.querySelector('span');
                 
-                icon.classList.remove('far', 'text-gray-500');
-                icon.classList.add('fas', 'text-rose-500');
-                text.classList.add('text-rose-500');
+                if (data.liked) {
+                    // Liked - show filled heart
+                    icon.classList.remove('far', 'text-gray-500');
+                    icon.classList.add('fas', 'text-rose-500');
+                    text.classList.remove('text-gray-600');
+                    text.classList.add('text-rose-500');
+                    text.textContent = 'Liked';
+                } else {
+                    // Unliked - show outline heart
+                    icon.classList.remove('fas', 'text-rose-500');
+                    icon.classList.add('far', 'text-gray-500');
+                    text.classList.remove('text-rose-500');
+                    text.classList.add('text-gray-600');
+                    text.textContent = 'Like';
+                }
             }
         }
     } catch (error) {
-        console.error('Error liking post:', error);
+        console.error('Error toggling like:', error);
     }
 }
 

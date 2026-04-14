@@ -8,11 +8,19 @@
         <!-- Recipe Header -->
         <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
             {% if recipe.image_url %}
-            <div class="h-64 overflow-hidden">
+            <div class="h-64 overflow-hidden relative">
                 <img src="{{ recipe.image_url }}" alt="{{ recipe.title }}" class="w-full h-full object-cover">
+                <!-- Back Button inside image -->
+                <a href="{{ url_for('recipes') }}" class="absolute top-4 left-4 inline-flex items-center justify-center w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all duration-200 text-gray-700 hover:text-gray-900 z-10">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
             </div>
             {% else %}
-            <div class="h-64 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+            <div class="h-64 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center relative">
+                <!-- Back Button inside gradient -->
+                <a href="{{ url_for('recipes') }}" class="absolute top-4 left-4 inline-flex items-center justify-center w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white transition-all duration-200 text-gray-700 hover:text-gray-900 z-10">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
                 <i class="fas fa-utensils text-8xl text-white/50"></i>
             </div>
             {% endif %}
@@ -63,6 +71,13 @@
                     </a>
                     {% endif %}
                 </div>
+                
+                <!-- Start Cooking Button -->
+                <div class="mt-4">
+                    <button onclick="openCookingModal()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg shadow-green-500/30 flex items-center justify-center gap-3">
+                        <i class="fas fa-play-circle"></i>Start to Cook
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -95,7 +110,7 @@
                     </div>
                     
                     <!-- Chat Messages -->
-                    <div id="recipe-chat-messages" class="h-48 overflow-y-auto bg-white rounded-lg p-4 mb-4 space-y-3">
+                    <div id="recipe-chat-messages" class="h-96 overflow-y-auto bg-white rounded-lg p-4 mb-4 space-y-3">
                         <div class="flex items-start">
                             <div class="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mr-2">
                                 <i class="fas fa-robot text-white text-sm"></i>
@@ -183,13 +198,157 @@
         <!-- Actions -->
         <div class="mt-8 flex justify-between items-center">
             <a href="{{ url_for('recipes') }}" class="text-gray-600 hover:text-orange-500 flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Recipes
-            </a>
+              </a>
             <div class="flex gap-4">
                 <button onclick="window.print()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition">
                     <i class="fas fa-print mr-2"></i>Print
                 </button>
                 <button onclick="shareRecipe()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition">
+                    <i class="fas fa-share-alt mr-2"></i>Share
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cooking Mode Modal -->
+<div id="cooking-modal" class="fixed inset-0 z-50 hidden">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeCookingModal()"></div>
+    
+    <!-- Modal Content -->
+    <div class="absolute inset-4 md:inset-10 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-orange-500 to-red-500 p-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chef-hat text-white text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-white text-xl font-bold">Cooking Mode</h2>
+                    <p class="text-white/80 text-sm">{{ recipe.title }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Voice Toggle -->
+                <button onclick="toggleVoice()" id="voice-btn" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <!-- Close -->
+                <button onclick="closeCookingModal()" class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/30 transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="bg-gray-100 px-6 py-3 border-b">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-600">Cooking Progress</span>
+                    <span class="text-sm font-bold text-orange-600" id="progress-text">0%</span>
+                </div>
+                <div class="w-full bg-gray-300 rounded-full h-3">
+                    <div id="cooking-progress-bar" class="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <!-- Skill Level Badge -->
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-xs text-gray-500">Difficulty:</span>
+                    <span id="skill-level-badge" class="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full">{{ recipe.difficulty|title }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instructions Content -->
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-3xl mx-auto">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">Step-by-Step Instructions</h3>
+                <div class="space-y-6" id="cooking-steps">
+                    {% for step in recipe.instructions.split('\n') %}
+                    {% if step.strip() %}
+                    <div class="cooking-step flex gap-4 p-4 rounded-xl transition-all duration-300" data-step="{{ loop.index }}" onclick="speakStep({{ loop.index }})">
+                        <div class="step-number w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
+                            {{ loop.index }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-lg text-gray-800 leading-relaxed">{{ step.strip() }}</p>
+                            <button onclick="speakStep({{ loop.index }})" class="mt-2 text-sm text-orange-500 hover:text-orange-600 flex items-center gap-2">
+                                <i class="fas fa-play"></i> Read Aloud
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Controls -->
+        <div class="bg-gray-50 p-4 border-t">
+            <div class="max-w-3xl mx-auto flex items-center justify-between">
+                <button onclick="previousStep()" class="px-6 py-3 bg-white border-2 border-gray-300 rounded-xl font-medium hover:bg-gray-50 transition flex items-center gap-2">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleAutoPlay()" id="autoplay-btn" class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition flex items-center gap-2">
+                        <i class="fas fa-play mr-2"></i>Auto-Play
+                    </button>
+                    <div class="text-gray-600">
+                        Step <span id="current-step-num">1</span> of <span id="total-steps">{{ recipe.instructions.split('\n')|select|list|length }}</span>
+                    </div>
+                </div>
+                <button onclick="nextStep()" class="px-6 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition flex items-center gap-2">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Completion Celebration Modal -->
+<div id="completion-modal" class="fixed inset-0 z-[60] hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center transform scale-100">
+            <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-500/30">
+                <i class="fas fa-trophy text-white text-3xl"></i>
+            </div>
+            
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Congratulations! 🎉</h2>
+            <p class="text-gray-600 mb-4">You've successfully cooked <strong>{{ recipe.title }}</strong>!</p>
+            
+            <!-- Skill Level Up Notification -->
+            <div id="skill-level-up" class="hidden bg-gradient-to-r from-orange-100 to-red-100 rounded-xl p-4 mb-6">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <i class="fas fa-star text-yellow-500"></i>
+                    <span class="font-bold text-orange-800">Skill Level Up!</span>
+                    <i class="fas fa-star text-yellow-500"></i>
+                </div>
+                <p class="text-sm text-orange-700">You've been promoted to <span id="new-skill-level" class="font-bold">Junior Chef</span>!</p>
+            </div>
+            
+            <p class="text-gray-500 text-sm mb-6">Would you like to share a photo of your delicious creation?</p>
+            
+            <!-- Photo Upload -->
+            <form id="completion-photo-form" action="{{ url_for('complete_recipe', recipe_id=recipe.id) }}" method="POST" enctype="multipart/form-data" class="mb-6">
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-orange-400 transition-colors cursor-pointer" onclick="document.getElementById('completion-photo').click()">
+                    <input type="file" id="completion-photo" name="photo" accept="image/*" class="hidden" onchange="previewCompletionPhoto(this)">
+                    <div id="upload-placeholder">
+                        <i class="fas fa-camera text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500 text-sm">Click to upload photo</p>
+                    </div>
+                    <img id="completion-photo-preview" class="hidden w-full h-48 object-cover rounded-lg">
+                </div>
+                <button type="submit" id="upload-btn" class="hidden w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition">
+                    <i class="fas fa-upload mr-2"></i>Upload Photo
+                </button>
+            </form>
+            
+            <div class="flex gap-3">
+                <button onclick="closeCompletionModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-medium transition">
+                    Skip for Now
+                </button>
+                <button onclick="shareCompletion()" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 rounded-xl font-medium transition">
                     <i class="fas fa-share-alt mr-2"></i>Share
                 </button>
             </div>
@@ -293,5 +452,342 @@
             alert('Recipe link copied to clipboard!');
         }
     }
+    
+    // Cooking Mode Functions
+    let currentStep = 1;
+    let voiceEnabled = true;
+    let autoPlay = false;
+    let autoPlayDelay = null;
+    let speechSynthesis = window.speechSynthesis;
+    let currentSpeech = null;
+    
+    function openCookingModal() {
+        document.getElementById('cooking-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        currentStep = 1;
+        autoPlay = false;
+        updateStepHighlight();
+        updateAutoPlayButton();
+        // Auto-read first step if voice is enabled
+        if (voiceEnabled) {
+            setTimeout(() => speakStep(1), 500);
+        }
+    }
+    
+    function closeCookingModal() {
+        document.getElementById('cooking-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+        autoPlay = false;
+        clearTimeout(autoPlayDelay);
+        // Stop any ongoing speech
+        if (speechSynthesis) {
+            speechSynthesis.cancel();
+        }
+    }
+    
+    function toggleVoice() {
+        voiceEnabled = !voiceEnabled;
+        const btn = document.getElementById('voice-btn');
+        if (voiceEnabled) {
+            btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            btn.classList.remove('bg-red-500/50');
+        } else {
+            btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            btn.classList.add('bg-red-500/50');
+            speechSynthesis.cancel();
+        }
+    }
+    
+    function toggleAutoPlay() {
+        autoPlay = !autoPlay;
+        updateAutoPlayButton();
+        
+        if (autoPlay && voiceEnabled) {
+            // If we're at the end, restart from step 1
+            const totalSteps = parseInt(document.getElementById('total-steps').textContent);
+            if (currentStep >= totalSteps) {
+                currentStep = 1;
+                updateStepHighlight();
+            }
+            speakStep(currentStep);
+        } else {
+            clearTimeout(autoPlayDelay);
+        }
+    }
+    
+    function updateAutoPlayButton() {
+        const btn = document.getElementById('autoplay-btn');
+        if (btn) {
+            if (autoPlay) {
+                btn.innerHTML = '<i class="fas fa-pause mr-2"></i>Pause';
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                btn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            } else {
+                btn.innerHTML = '<i class="fas fa-play mr-2"></i>Auto-Play';
+                btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                btn.classList.add('bg-green-500', 'hover:bg-green-600');
+            }
+        }
+    }
+    
+    // Chef voice settings
+    let chefVoice = null;
+    
+    // Load available voices and select a good chef voice
+    function loadChefVoice() {
+        const voices = speechSynthesis.getVoices();
+        
+        // Prefer male, English voices that sound authoritative
+        const preferredVoices = [
+            'Google US English',
+            'Microsoft David',
+            'Microsoft Mark',
+            'Daniel',
+            'Fred',
+            'Google UK English Male',
+            'Microsoft Guy',
+            'en-US'
+        ];
+        
+        for (const voiceName of preferredVoices) {
+            const voice = voices.find(v => v.name.includes(voiceName) || v.lang === 'en-US');
+            if (voice) {
+                chefVoice = voice;
+                break;
+            }
+        }
+        
+        // Fallback to any English voice
+        if (!chefVoice) {
+            chefVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+        }
+    }
+    
+    // Load voices when available
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadChefVoice;
+    }
+    loadChefVoice();
+    
+    function speakStep(stepNum) {
+        if (!voiceEnabled || !speechSynthesis) return;
+        
+        // Stop any current speech and clear pending auto-play
+        speechSynthesis.cancel();
+        clearTimeout(autoPlayDelay);
+        
+        const stepElement = document.querySelector(`[data-step="${stepNum}"]`);
+        if (!stepElement) return;
+        
+        const stepText = stepElement.querySelector('p').textContent;
+        const text = `Step ${stepNum}. ${stepText}`;
+        
+        currentSpeech = new SpeechSynthesisUtterance(text);
+        
+        // Chef-like voice settings
+        currentSpeech.rate = 0.85;
+        currentSpeech.pitch = 0.75;
+        currentSpeech.volume = 1;
+        
+        // Use chef voice if available
+        if (chefVoice) {
+            currentSpeech.voice = chefVoice;
+        }
+        
+        // When speech ends and auto-play is on, go to next step after delay
+        currentSpeech.onend = () => {
+            if (autoPlay) {
+                const totalSteps = parseInt(document.getElementById('total-steps').textContent);
+                // Calculate delay based on text length (at least 2 seconds, plus time per word)
+                const wordCount = stepText.split(' ').length;
+                const delay = Math.max(2000, wordCount * 300); // At least 2s, or 300ms per word
+                
+                autoPlayDelay = setTimeout(() => {
+                    if (currentStep < totalSteps) {
+                        nextStep();
+                    } else {
+                        // Finished all steps
+                        autoPlay = false;
+                        updateAutoPlayButton();
+                    }
+                }, delay);
+            }
+        };
+        
+        speechSynthesis.speak(currentSpeech);
+    }
+    
+    function updateStepHighlight() {
+        const steps = document.querySelectorAll('.cooking-step');
+        steps.forEach((step, index) => {
+            const stepNum = index + 1;
+            if (stepNum === currentStep) {
+                step.classList.add('bg-orange-50', 'border-2', 'border-orange-200');
+                step.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                step.classList.remove('bg-orange-50', 'border-2', 'border-orange-200');
+            }
+        });
+        document.getElementById('current-step-num').textContent = currentStep;
+    }
+    
+    function nextStep() {
+        const totalSteps = parseInt(document.getElementById('total-steps').textContent);
+        if (currentStep < totalSteps) {
+            currentStep++;
+            updateStepHighlight();
+            if (voiceEnabled) speakStep(currentStep);
+        }
+    }
+    
+    function previousStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateStepHighlight();
+            if (voiceEnabled) speakStep(currentStep);
+        }
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('cooking-modal');
+        if (modal.classList.contains('hidden')) return;
+        
+        if (e.key === 'ArrowRight') nextStep();
+        if (e.key === 'ArrowLeft') previousStep();
+        if (e.key === 'Escape') closeCookingModal();
+        if (e.key === ' ') {
+            e.preventDefault();
+            toggleVoice();
+        }
+    });
+    
+    // Progress Bar and Skill Level Functions
+    function updateProgress() {
+        const totalSteps = parseInt(document.getElementById('total-steps').textContent);
+        const progress = Math.round((currentStep / totalSteps) * 100);
+        document.getElementById('cooking-progress-bar').style.width = progress + '%';
+        document.getElementById('progress-text').textContent = progress + '%';
+        
+        // Update skill level based on progress
+        updateSkillLevel(progress);
+    }
+    
+    function updateSkillLevel(progress) {
+        const badge = document.getElementById('skill-level-badge');
+        let level = 'Beginner Chef';
+        let colorClass = 'bg-orange-100 text-orange-700';
+        
+        if (progress >= 25 && progress < 50) {
+            level = 'Novice Chef';
+            colorClass = 'bg-yellow-100 text-yellow-700';
+        } else if (progress >= 50 && progress < 75) {
+            level = 'Home Cook';
+            colorClass = 'bg-green-100 text-green-700';
+        } else if (progress >= 75 && progress < 100) {
+            level = 'Skilled Chef';
+            colorClass = 'bg-blue-100 text-blue-700';
+        } else if (progress === 100) {
+            level = 'Master Chef';
+            colorClass = 'bg-purple-100 text-purple-700';
+        }
+        
+        badge.textContent = level;
+        badge.className = 'px-2 py-0.5 text-xs font-semibold rounded-full ' + colorClass;
+    }
+    
+    // Completion Modal Functions
+    function showCompletionModal() {
+        document.getElementById('cooking-modal').classList.add('hidden');
+        document.getElementById('completion-modal').classList.remove('hidden');
+        
+        // Show skill level up notification if completed
+        const skillLevelUp = document.getElementById('skill-level-up');
+        const newSkillLevel = document.getElementById('new-skill-level');
+        const currentLevel = document.getElementById('skill-level-badge').textContent;
+        
+        if (currentLevel === 'Master Chef') {
+            newSkillLevel.textContent = 'Master Chef';
+            skillLevelUp.classList.remove('hidden');
+        }
+    }
+    
+    function closeCompletionModal() {
+        document.getElementById('completion-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    
+    function previewCompletionPhoto(input) {
+        const preview = document.getElementById('completion-photo-preview');
+        const placeholder = document.getElementById('upload-placeholder');
+        const uploadBtn = document.getElementById('upload-btn');
+        
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function shareCompletion() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'I just cooked {{ recipe.title }}!',
+                text: 'Check out my delicious creation from Cooking with Kaya!',
+                url: window.location.href
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard! Share your achievement!');
+        }
+    }
+    
+    // Override nextStep to update progress and check for completion
+    const originalNextStep = nextStep;
+    nextStep = function() {
+        const totalSteps = parseInt(document.getElementById('total-steps').textContent);
+        if (currentStep < totalSteps) {
+            currentStep++;
+            updateStepHighlight();
+            updateProgress();
+            if (voiceEnabled) speakStep(currentStep);
+        } else {
+            // Completed all steps
+            updateProgress();
+            setTimeout(showCompletionModal, 1000);
+        }
+    };
+    
+    // Override previousStep to update progress
+    const originalPreviousStep = previousStep;
+    previousStep = function() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateStepHighlight();
+            updateProgress();
+            if (voiceEnabled) speakStep(currentStep);
+        }
+    };
+    
+    // Override openCookingModal to reset progress
+    const originalOpenCookingModal = openCookingModal;
+    openCookingModal = function() {
+        document.getElementById('cooking-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        currentStep = 1;
+        autoPlay = false;
+        updateStepHighlight();
+        updateProgress();
+        updateAutoPlayButton();
+        // Auto-read first step if voice is enabled
+        if (voiceEnabled) {
+            setTimeout(() => speakStep(1), 500);
+        }
+    };
 </script>
 {% endblock %}
